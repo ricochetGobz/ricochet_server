@@ -1,0 +1,10 @@
+.DS_Store
+
+### Server ###
+
+# NPM packages folder.
+node_modules/
+npm-debug.log
+
+# dist
+public/
