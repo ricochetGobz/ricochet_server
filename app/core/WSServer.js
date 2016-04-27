@@ -19,16 +19,27 @@ const URL_RENDER_WEB_DEBUG = 'http://localhost:9966';
 const URL_CUBE = 'TODO';
 const URL_BRACELET = 'TODO';
 
-// LISTENERS
-const WEB_RENDER_STATUS_CHANGE = 'webrenderstatuschange';
-// SENDERS
-const OPEN_FRAMEWORKS_STATUS_CHANGE = 'ofstatuschange';
-const KINECT_STATUS_CHANGE = 'kinectstatuschange';
-const PLAY_CUBE = 'playcube';
+const addresses = [
+  // PRIVATE
+  '/webRenderStatusChange',
+  // SENDERS
+  '/OFStatusChange',
+  '/KStatusChange',
+  // RECEIVERS
+  '/cubeConnected',
+  '/cubeDisconnected',
+  '/cubeTouched',
+  '/cubeDragged',
+  '/cubeDragOut',
+  '/braceletConnected',
+  '/braceletDisconnected',
+  // BOTH
+  '/playCube',
+];
 
 export default class WSServer {
   constructor(callback) {
-    this.listeners = {};
+    this._listeners = {};
 
     this._webRenderConnection = false;
 
@@ -106,7 +117,7 @@ export default class WSServer {
     this._webRenderConnection = request.accept('echo-protocol', request.origin);
 
     // CONNECTED
-    this._callListener(WEB_RENDER_STATUS_CHANGE, true);
+    this._callListener('/webRenderStatusChange', true);
 
     // ON WEB RENDER RECEIVE MESSAGE
     this._on(this._webRenderConnection, (message) => {
@@ -114,7 +125,7 @@ export default class WSServer {
       console.log(`Web Render send : ${content}`);
     }, () => {
       this._webRenderConnection = false;
-      this._callListener(WEB_RENDER_STATUS_CHANGE, false);
+      this._callListener('/webRenderStatusChange', false);
     });
   }
 
@@ -142,81 +153,49 @@ export default class WSServer {
    * LISTENERS
    * #########################
    */
-  _callListener(listener, data) {
-    if (this.listeners[listener]) {
-      this.listeners[listener](data);
-    }
-  }
+   _callListener(address, data) {
+     if (addresses.indexOf(address) === -1) {
+       console.log(`_callListener ERROR : ${address} doesn't exist.`);
+       return;
+     }
+     if (this._listeners[address]) {
+       this._listeners[address](data);
+       return;
+     }
+     console.log(`_callListener ERROR : ${address} not listened`);
+   }
 
-  /**
-   * #########################
-   * WEB RENDER EVENTS
-   */
-  // RECEIVERS
-  onWebRenderStatusChange(callback) {
-    this.listeners[WEB_RENDER_STATUS_CHANGE] = (status) => {
-      callback(status);
+  on(address, callback) {
+    if (addresses.indexOf(address) === -1) {
+      console.log(`on() ERROR : ${address} doesn't exist.`);
+      return;
+    }
+    this._listeners[address] = (data) => {
+      if (utils.isJSON) {
+        callback(JSON.parse(data));
+      } else {
+        callback(data);
+      }
     };
   }
-  // SENDERS
-  sendOFStatusChange(isConnected) {
-    this._sendToWebRender(OPEN_FRAMEWORKS_STATUS_CHANGE, isConnected);
-  }
-  sendKinectStatusChange(isConnected) {
-    this._sendToWebRender(KINECT_STATUS_CHANGE, isConnected);
-  }
 
-  _sendToWebRender(address, data) {
+  sendToWebRender(address, data) {
+    if (addresses.indexOf(address) === -1) {
+      console.log(`send() ERROR : ${address} doesn't exist.`);
+      return;
+    }
     if (this._webRenderConnection) {
       this._webRenderConnection.sendUTF(JSON.stringify({ address, data }));
     } else {
       utils.logError('You cannot send message, web render is disconnected');
     }
   }
+
   // STATUS
   webRenderConnected() {
     if (this._webRenderConnection) {
       return true;
     }
     return false;
-  }
-
-  /**
-  * #########################
-  * BRACELET EVENTS
-  */
-  onBraceletConnected(callback) {
-    // TODO save callback(idCube, idSound);
-  }
-
-  // TODO send to bracelet
-
-  /**
-   * #########################
-   * CUBE EVENTS
-   */
-   // RECEIVERS
-  onCubeConnected(callback) {
-    // TODO save callback(idCube, idSound);
-  }
-
-  onCubeDisconnected(callback) {
-    // TODO save callback(idCube, idSound);
-  }
-
-  onCubeTouched(callback) {
-    // TODO save callback(idCube);
-  }
-
-  onCubeDragged(callback) {
-    // TODO save callback(idCube);
-  }
-
-  onCubeDragOut(callback) {
-    // TODO save callback(idCube);
-  }
-  // SENDERS
-  sendPlayCube(data){
-    this._sendToWebRender(PLAY_CUBE, data);
   }
 }

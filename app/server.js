@@ -32,21 +32,24 @@ _OFBridge.onOFStatusChange((isConnected) => {
     OFConnected = true;
     _OFBridge.sendServerStatus(true);
     _OFBridge.sendWebRenderStatus(webRenderConnected);
+
+    _WSServer.sendToWebRender('/OFStatusChange', isConnected);
   } else {
     OFConnected = false;
   }
-  _WSServer.sendOFStatusChange(isConnected);
+  _WSServer.sendToWebRender('/OFStatusChange', isConnected);
   console.log(`OPEN FRAMEWORK : ${isConnected ? 'ON' : 'OFF'}`);
 });
 
 _OFBridge.onKinectStatusChange((isConnected) => {
   kinectConnected = isConnected;
-  _WSServer.sendKinectStatusChange(isConnected);
+  _WSServer.sendToWebRender('/KStatusChange', isConnected);
   console.log(`KINECT : ${isConnected ? 'ON' : 'OFF'}`);
 });
 
 _OFBridge.onPlayCube((d) => {
-  _WSServer.sendPlayCube(JSON.stringify(d));
+  _WSServer.sendToWebRender('/playCube', JSON.stringify(d));
+
 });
 
 /**
@@ -55,13 +58,14 @@ _OFBridge.onPlayCube((d) => {
  * #########################
  */
 
-_WSServer.onWebRenderStatusChange((isConnected) => {
+_WSServer.on('/webRenderStatusChange', (isConnected) => {
   webRenderConnected = isConnected;
   console.log(`Web Render : ${isConnected ? 'ON' : 'OFF'}`);
   _OFBridge.sendWebRenderStatus(isConnected);
   if (isConnected) {
-    _WSServer.sendOFStatusChange(OFConnected);
-    _WSServer.sendKinectStatusChange(kinectConnected);
+    _WSServer.sendToWebRender('/KStatusChange', kinectConnected);
+    _WSServer.sendToWebRender('/OFStatusChange', kinectConnected);
+
 
     // TODO check si le nombre de cube est > 0.
   }
@@ -73,24 +77,24 @@ _WSServer.onWebRenderStatusChange((isConnected) => {
  * #########################
  */
 
-_WSServer.onCubeConnected((idCube, idSound) => {
+_WSServer.on('/cubeConnected', (idCube, idSound) => {
   cubes[idCube] = new Cube(idCube, idSound);
 });
 
-_WSServer.onCubeDisconnected((idCube) => {
+_WSServer.on('/cubeDisconnected', (idCube) => {
   // TODO delete of other the cube
   delete cubes[idCube];
 });
 
-_WSServer.onCubeTouched((idCube) => {
+_WSServer.on('/cubeTouched', (idCube) => {
   // TODO send to OF the cube of check if a new cube is see into OF.
 });
 
-_WSServer.onCubeDragged((idCube) => {
+_WSServer.on('/cubeDragged', (idCube) => {
   // TODO send to OF the cube of check if a new cube is see into OF.
 });
 
-_WSServer.onCubeDragOut((idCube) => {
+_WSServer.on('/cubeDragOut', (idCube) => {
   // TODO
 });
 
