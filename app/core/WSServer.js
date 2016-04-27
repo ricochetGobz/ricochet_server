@@ -33,7 +33,7 @@ export default class WSServer {
     this._webRenderConnection = false;
 
     this.server = http.createServer((request, response) => {
-      let url = './render/public';
+      let url = '../ricochet_render/public';
       utils.logDate(`Received request for  ${request.url}`);
 
       if (request.url === '/') {
