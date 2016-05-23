@@ -1,11 +1,11 @@
 {
-  "name": "web-starter",
+  "name": "ricocher-server",
   "version": "1.0.0",
-  "description": "My organization for node.js development only with npm scripts.",
+  "description": "Server node.js for our ricochet project",
   "main": "app/main.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jeremboo/web-starter/tree/npm-server"
+    "url": "https://github.com/ricochetGobz/ricochet_server"
   },
   "scripts": {
     "start": "nodemon app/server.js --exec babel-node --presets es2015",
@@ -14,10 +14,9 @@
     "deploy": "npm run build && npm run server"
   },
   "keywords": [
-    "starter",
-    "kit",
-    "babel",
-    "html5",
+    "ricochet",
+    "webSocket",
+    "osc",
     "npm"
   ],
   "author": "Jérémie Boulay <jeremi.boulay@gmail.com>",
