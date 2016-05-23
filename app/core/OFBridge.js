@@ -8,22 +8,10 @@
 
 import osc from 'node-osc';
 import utils from './utils';
+import adrs from './addresses';
 
 const SENDER_PORT = 5555;
 const RECEIVER_PORT = 4444;
-// RECEIVERS
-const OPEN_FRAMEWORKS_CONNECTED = '/OPConnected';
-const OPEN_FRAMEWORKS_DISCONNECTED = '/OPDisconnected';
-const KINECT_CONNECTED = '/KConnected';
-const KINECT_DISCONNECTED = '/KDisconnected';
-const PLAY_CUBE = '/playCube';
-// SENDERS
-const WEB_RENDER_CONNECTED = '/WRConnected';
-const WEB_RENDER_DISCONNECTED = '/WRDisconnected';
-const SERVER_STARTED = '/serverStarted';
-const SERVER_DOWN = '/serverDown';
-const NEW_CUBE_CONNECTED = '/newCubeConnected';
-
 
 export default class OFBridge {
   constructor() {
@@ -73,6 +61,10 @@ export default class OFBridge {
   }
 
   _send(address, data) {
+    if (!utils.addressExist(address)) {
+      console.log(`OFBridge._send() : ${address} doesn't exist.`);
+      return;
+    }
     const d = data || '';
     this._client.send(address, d);
   }
@@ -85,9 +77,9 @@ export default class OFBridge {
   // SENDERS
   sendServerStatus(isConnected) {
     if (isConnected) {
-      this._send(SERVER_STARTED);
+      this._send(adrs.SERVER_CONNECTED);
     } else {
-      this._send(SERVER_DOWN);
+      this._send(adrs.SERVER_DISCONNECTED);
     }
   }
 
@@ -98,31 +90,31 @@ export default class OFBridge {
    */
   // RECEIVERS
   onOFStatusChange(callback) {
-    this._listeners[OPEN_FRAMEWORKS_CONNECTED] = () => {
+    this._listeners[adrs.OPEN_FRAMEWORKS_CONNECTED] = () => {
       // called only if OP not already connected
       if (!this._OFAlreadyConnected) {
         this._OFAlreadyConnected = true;
         callback(true);
       }
     };
-    this._listeners[OPEN_FRAMEWORKS_DISCONNECTED] = () => {
+    this._listeners[adrs.OPEN_FRAMEWORKS_DISCONNECTED] = () => {
       if (this._OFAlreadyConnected) {
         this._OFAlreadyConnected = false;
-        this._callListener(KINECT_DISCONNECTED);
+        this._callListener(adrs.KINECT_DISCONNECTED);
         callback(false);
       }
     };
   }
 
   onKinectStatusChange(callback) {
-    this._listeners[KINECT_CONNECTED] = () => {
+    this._listeners[adrs.KINECT_CONNECTED] = () => {
       if (!this._KinectAlreadyConnected) {
         this._KinectAlreadyConnected = true;
         callback(true);
       }
     };
 
-    this._listeners[KINECT_DISCONNECTED] = () => {
+    this._listeners[adrs.KINECT_DISCONNECTED] = () => {
       if (this._KinectAlreadyConnected) {
         this._KinectAlreadyConnected = false;
         callback(false);
@@ -140,9 +132,9 @@ export default class OFBridge {
   // SENDERS
   sendWebRenderStatus(isConnected) {
     if (isConnected) {
-      this._send(WEB_RENDER_CONNECTED);
+      this._send(adrs.WEB_RENDER_CONNECTED);
     } else {
-      this._send(WEB_RENDER_DISCONNECTED);
+      this._send(adrs.WEB_RENDER_DISCONNECTED);
     }
   }
 
@@ -153,17 +145,20 @@ export default class OFBridge {
    */
   // RECEIVERS
   onPlayCube(callback) {
-    this._listeners[PLAY_CUBE] = (data) => {
+    this._listeners[adrs.CUBE_PLAYED] = (data) => {
       callback(data);
     };
   }
 
   // SENDERS
-  sendNewCubeConnected(id) {
+  sendCubeEvent(address, id) {
     if (typeof id === 'undefined') {
-      utils.logError('OFBridge.sendNewCubeConnected() -- No id into argument');
+      utils.logError('OFBridge.sendCubeEvent() -- No id into argument');
       return;
     }
-    this._send(NEW_CUBE_CONNECTED, id);
+
+    if (utils.addressExist(address)) {
+      this._send(address, id);
+    }
   }
 }

@@ -9,6 +9,7 @@ import { server as WebSocketServer } from 'websocket';
 import http from 'http';
 import fs from 'fs';
 import utils from './utils';
+import adrs from './addresses';
 
 // TODO utiliser express peut être a la place de http seulement.
 
@@ -18,24 +19,6 @@ const URL_RENDER_WEB = `http://localhost:${PORT}`;
 const URL_RENDER_WEB_DEBUG = 'http://localhost:9966';
 const URL_CUBE = 'TODO';
 const URL_BRACELET = 'TODO';
-
-const addresses = [
-  // PRIVATE
-  '/webRenderStatusChange',
-  // SENDERS
-  '/OFStatusChange',
-  '/KStatusChange',
-  // RECEIVERS
-  '/cubeConnected',
-  '/cubeDisconnected',
-  '/cubeTouched',
-  '/cubeDragged',
-  '/cubeDragOut',
-  '/braceletConnected',
-  '/braceletDisconnected',
-  // BOTH
-  '/playCube',
-];
 
 export default class WSServer {
   constructor(callback) {
@@ -117,7 +100,7 @@ export default class WSServer {
     this._webRenderConnection = request.accept('echo-protocol', request.origin);
 
     // CONNECTED
-    this._callListener('/webRenderStatusChange', true);
+    this._callListener(adrs.WEB_RENDER_STATUS_CHANGE, true);
 
     // ON WEB RENDER RECEIVE MESSAGE
     this._on(this._webRenderConnection, (message) => {
@@ -125,7 +108,7 @@ export default class WSServer {
       console.log(`Web Render send : ${content}`);
     }, () => {
       this._webRenderConnection = false;
-      this._callListener('/webRenderStatusChange', false);
+      this._callListener(adrs.WEB_RENDER_STATUS_CHANGE, false);
     });
   }
 
@@ -153,21 +136,21 @@ export default class WSServer {
    * LISTENERS
    * #########################
    */
-   _callListener(address, data) {
-     if (addresses.indexOf(address) === -1) {
-       console.log(`_callListener ERROR : ${address} doesn't exist.`);
-       return;
-     }
-     if (this._listeners[address]) {
-       this._listeners[address](data);
-       return;
-     }
-     console.log(`_callListener ERROR : ${address} not listened`);
-   }
+  _callListener(address, data) {
+    if (!utils.addressExist(address)) {
+      console.log(`_callListener ERROR : ${address} doesn't exist.`);
+      return;
+    }
+    if (this._listeners[address]) {
+      this._listeners[address](data);
+      return;
+    }
+    console.log(`_callListener ERROR : ${address} not listened`);
+  }
 
   on(address, callback) {
-    if (addresses.indexOf(address) === -1) {
-      console.log(`on() ERROR : ${address} doesn't exist.`);
+    if (!utils.addressExist(address)) {
+      console.log(`WSServer.on() ERROR : ${address} doesn't exist.`);
       return;
     }
     this._listeners[address] = (data) => {
@@ -180,7 +163,7 @@ export default class WSServer {
   }
 
   sendToWebRender(address, data) {
-    if (addresses.indexOf(address) === -1) {
+    if (!utils.addressExist(address)) {
       console.log(`send() ERROR : ${address} doesn't exist.`);
       return;
     }

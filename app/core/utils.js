@@ -5,6 +5,8 @@
 *
 **/
 
+import adrs from './addresses';
+
 const util = {
   logError: (message) => {
     console.warn(`
@@ -22,6 +24,12 @@ const util = {
       return false;
     }
     return true;
+  },
+  addressExist: (adr) => {
+    for (const key in adrs) {
+      if (adrs[key] === adr) return true;
+    }
+    return false;
   },
 };
 
