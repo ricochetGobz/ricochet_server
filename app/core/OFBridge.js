@@ -71,6 +71,25 @@ export default class OFBridge {
 
   /**
    * #########################
+   * GENERIC RECEIVERS
+   */
+  on(address, callback) {
+    if (!utils.addressExist(address)) {
+      console.log(`OFBridge.on() ERROR : ${address} doesn't exist.`);
+      return;
+    }
+    this._listeners[address] = (data) => {
+      if (utils.isJSON(data)) {
+        callback(JSON.parse(data));
+      } else {
+        callback(data);
+      }
+    };
+  }
+
+
+  /**
+   * #########################
    * SERVER EVENTS
    */
   // RECEIVERS
@@ -138,17 +157,10 @@ export default class OFBridge {
     }
   }
 
-
   /**
    * #########################
    * CUBE EVENT
    */
-  // RECEIVERS
-  onPlayCube(callback) {
-    this._listeners[adrs.CUBE_PLAYED] = (data) => {
-      callback(data);
-    };
-  }
 
   // SENDERS
   sendCubeEvent(address, id) {

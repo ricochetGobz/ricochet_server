@@ -22,6 +22,7 @@ const _WSServer = new WSServer(() => {
 let OFConnected = false;
 let webRenderConnected = false;
 let kinectConnected = false;
+let nbrOfCubeFounded = 0;
 
 /**
  * #########################
@@ -49,7 +50,7 @@ _OFBridge.onKinectStatusChange((isConnected) => {
   console.log(`KINECT : ${isConnected ? 'ON' : 'OFF'}`);
 });
 
-_OFBridge.onPlayCube((d) => {
+_OFBridge.on(adrs.CUBE_PLAYED, (d) => {
   _WSServer.sendToWebRender(adrs.CUBE_PLAYED, JSON.stringify(d));
 });
 
@@ -66,9 +67,7 @@ _WSServer.on(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
   if (isConnected) {
     _WSServer.sendToWebRender(adrs.KINECT_STATUS_CHANGE, kinectConnected);
     _WSServer.sendToWebRender(adrs.OPEN_FRAMEWORKS_STATUS_CHANGE, kinectConnected);
-
-
-    // TODO check si le nombre de cube est > 0.
+    _WSServer.sendToWebRender(adrs.NBR_CUBE_FOUNDED, nbrOfCubeFounded);
   }
 });
 
@@ -101,6 +100,10 @@ _WSServer.on(adrs.CUBE_DRAG_END, (idCube) => {
   // TODO send to OF the cube of check if a new cube is see into OF.
 });
 
+_OFBridge.on(adrs.NBR_CUBE_FOUNDED, (nbrCubeFounded) => {
+  nbrOfCubeFounded = nbrCubeFounded;
+  _WSServer.sendToWebRender(adrs.NBR_CUBE_FOUNDED, nbrCubeFounded);
+});
 
 /**
 * #########################

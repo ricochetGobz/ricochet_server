@@ -73,8 +73,6 @@ export default class WSServer {
     // CHECK IF THE CONNECTED ITEM IS AN CUBE, BRACELET OR WEBREDER
     switch (request.origin) {
       case URL_RENDER_WEB:
-        this._createWebRenderConnection(request);
-        break;
       case URL_RENDER_WEB_DEBUG:
         this._createWebRenderConnection(request);
         break;
@@ -114,9 +112,17 @@ export default class WSServer {
 
   _createCubeConnection(request) {
     // const connection = request.accept('arduino', request.origin);
+    // CONNECTED
+
+    // TODO GetCubeId && CubeIdSound
+    this._callListener(adrs.CUBE_CONNECTED, -1, -1);
   }
   _createBraceletConnection(request) {
     // const connection = request.accept('arduino', request.origin);
+    // CONNECTED
+
+    // TODO GetBraceletId
+    this._callListener(adrs.BRACELET_CONNECTED, -1);
   }
 
   _on(connection, callbackMessage, callbackClose) {
@@ -154,7 +160,7 @@ export default class WSServer {
       return;
     }
     this._listeners[address] = (data) => {
-      if (utils.isJSON) {
+      if (utils.isJSON(data)) {
         callback(JSON.parse(data));
       } else {
         callback(data);
@@ -176,9 +182,6 @@ export default class WSServer {
 
   // STATUS
   webRenderConnected() {
-    if (this._webRenderConnection) {
-      return true;
-    }
-    return false;
+    return (this._webRenderConnection);
   }
 }
