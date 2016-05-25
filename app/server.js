@@ -22,7 +22,7 @@ const _WSServer = new WSServer(() => {
 let OFConnected = false;
 let webRenderConnected = false;
 let kinectConnected = false;
-let nbrOfCubeFounded = 0;
+let nbrOfCubeFound = 0;
 
 /**
  * #########################
@@ -67,7 +67,7 @@ _WSServer.on(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
   if (isConnected) {
     _WSServer.sendToWebRender(adrs.KINECT_STATUS_CHANGE, kinectConnected);
     _WSServer.sendToWebRender(adrs.OPEN_FRAMEWORKS_STATUS_CHANGE, kinectConnected);
-    _WSServer.sendToWebRender(adrs.NBR_CUBE_FOUNDED, nbrOfCubeFounded);
+    _WSServer.sendToWebRender(adrs.NBR_CUBE_FOUND, nbrOfCubeFound);
   }
 });
 
@@ -100,9 +100,9 @@ _WSServer.on(adrs.CUBE_DRAG_END, (idCube) => {
   // TODO send to OF the cube of check if a new cube is see into OF.
 });
 
-_OFBridge.on(adrs.NBR_CUBE_FOUNDED, (nbrCubeFounded) => {
-  nbrOfCubeFounded = nbrCubeFounded;
-  _WSServer.sendToWebRender(adrs.NBR_CUBE_FOUNDED, nbrCubeFounded);
+_OFBridge.on(adrs.NBR_CUBE_FOUND, (nbrCubeFound) => {
+  nbrOfCubeFound = nbrCubeFound;
+  _WSServer.sendToWebRender(adrs.NBR_CUBE_FOUND, nbrCubeFound);
 });
 
 /**
