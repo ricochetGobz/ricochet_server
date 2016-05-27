@@ -61,11 +61,16 @@ export default class OFBridge {
   }
 
   _send(address, data) {
+    let d = data || '';
+
+    if (typeof(d) !== 'string') {
+      d = JSON.stringify(d);
+    }
+
     if (!utils.addressExist(address)) {
       console.log(`OFBridge._send() : ${address} doesn't exist.`);
       return;
     }
-    const d = data || '';
     this._client.send(address, d);
   }
 
@@ -163,14 +168,14 @@ export default class OFBridge {
    */
 
   // SENDERS
-  sendCubeEvent(address, id) {
-    if (typeof id === 'undefined') {
-      utils.logError('OFBridge.sendCubeEvent() -- No id into argument');
+  sendCubeEvent(address, data) {
+    if (typeof data === 'undefined') {
+      utils.logError('OFBridge.sendCubeEvent() -- No data into argument');
       return;
     }
 
     if (utils.addressExist(address)) {
-      this._send(address, id);
+      this._send(address, data);
     }
   }
 }

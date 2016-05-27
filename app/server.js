@@ -12,111 +12,136 @@ import Bracelet from './components/Bracelet';
 
 import adrs from './core/addresses';
 
-const cubes = {};
-const bracelets = {};
+const _cubes = {};
+const _bracelets = {};
 const _OFBridge = new OFBridge();
 const _WSServer = new WSServer(() => {
   _OFBridge.sendServerStatus(true);
 });
 
-let OFConnected = false;
-let webRenderConnected = false;
-let kinectConnected = false;
-let nbrOfCubeFound = 0;
+let _openFrameworksConnected = false;
+let _webRenderConnected = false;
+let _kinectConnected = false;
+let _nbrOfCubeFound = 0;
 
 /**
  * #########################
  * OPEN FRAMEWORK
  * #########################
  */
-
 _OFBridge.onOFStatusChange((isConnected) => {
-  if (isConnected) {
-    OFConnected = true;
-    _OFBridge.sendServerStatus(true);
-    _OFBridge.sendWebRenderStatus(webRenderConnected);
+  _openFrameworksConnected = isConnected;
+  console.log(`OPEN FRAMEWORK : ${_openFrameworksConnected ? 'ON' : 'OFF'}`);
 
-    _WSServer.sendToWebRender(adrs.OPEN_FRAMEWORKS_STATUS_CHANGE, isConnected);
-  } else {
-    OFConnected = false;
+  if (_openFrameworksConnected) {
+    _OFBridge.sendServerStatus(_openFrameworksConnected);
+    _OFBridge.sendWebRenderStatus(_webRenderConnected);
   }
-  _WSServer.sendToWebRender(adrs.OPEN_FRAMEWORKS_STATUS_CHANGE, isConnected);
-  console.log(`OPEN FRAMEWORK : ${isConnected ? 'ON' : 'OFF'}`);
+  _WSServer.postToWebRender(adrs.OPEN_FRAMEWORKS_STATUS_CHANGE, _openFrameworksConnected);
 });
 
 _OFBridge.onKinectStatusChange((isConnected) => {
-  kinectConnected = isConnected;
-  _WSServer.sendToWebRender(adrs.KINECT_STATUS_CHANGE, isConnected);
+  _kinectConnected = isConnected;
   console.log(`KINECT : ${isConnected ? 'ON' : 'OFF'}`);
+
+  _WSServer.postToWebRender(adrs.KINECT_STATUS_CHANGE, _kinectConnected);
 });
 
 _OFBridge.on(adrs.CUBE_PLAYED, (d) => {
-  _WSServer.sendToWebRender(adrs.CUBE_PLAYED, JSON.stringify(d));
+  _WSServer.postToWebRender(adrs.CUBE_PLAYED, JSON.stringify(d));
+});
+
+_OFBridge.on(adrs.NBR_CUBE_FOUND, (nbrCubeFound) => {
+  _nbrOfCubeFound = nbrCubeFound;
+  _WSServer.postToWebRender(adrs.NBR_CUBE_FOUND, _nbrOfCubeFound);
 });
 
 /**
  * #########################
- * RENDER WEB EVENTS
+ * WEB SERVER
  * #########################
  */
 
-_WSServer.on(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
-  webRenderConnected = isConnected;
+ /**
+ * WEB RENDER SOCKET
+ */
+_WSServer.onReceiveToSocket(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
+  _webRenderConnected = isConnected;
   console.log(`Web Render : ${isConnected ? 'ON' : 'OFF'}`);
-  _OFBridge.sendWebRenderStatus(isConnected);
-  if (isConnected) {
-    _WSServer.sendToWebRender(adrs.KINECT_STATUS_CHANGE, kinectConnected);
-    _WSServer.sendToWebRender(adrs.OPEN_FRAMEWORKS_STATUS_CHANGE, kinectConnected);
-    _WSServer.sendToWebRender(adrs.NBR_CUBE_FOUND, nbrOfCubeFound);
+  _OFBridge.sendWebRenderStatus(_webRenderConnected);
+  if (_webRenderConnected) {
+    _WSServer.postToWebRender(adrs.KINECT_STATUS_CHANGE, _kinectConnected);
+    // console.log(_openFrameworksConnected);
+    _WSServer.postToWebRender(adrs.OPEN_FRAMEWORKS_STATUS_CHANGE, _openFrameworksConnected);
+    _WSServer.postToWebRender(adrs.NBR_CUBE_FOUND, _nbrOfCubeFound);
   }
 });
 
 /**
- * #########################
- * CUBE EVENTS
- * #########################
- */
+* CUBE HTTP
+*/
+_WSServer.onReceiveToHTTP(adrs.CUBE_CONNECTED, (req, res) => {
+  console.log('cube connected');
 
-_WSServer.on(adrs.CUBE_CONNECTED, (idCube, idSound) => {
-  cubes[idCube] = new Cube(idCube, idSound);
-  // TODO SEND TO OF
+  // TODO get idCube, idSound
+  const idCube = -1;
+  const idSound = -1;
+
+  _cubes[idCube] = new Cube(idCube, idSound);
+
+
+  // TODO res json
+  res.json({
+    success: true,
+    message: '200',
+  });
+
+  _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, { idCube, idSound });
 });
 
-_WSServer.on(adrs.CUBE_DISCONNECTED, (idCube) => {
+_WSServer.onReceiveToHTTP(adrs.CUBE_DISCONNECTED, (req, res) => {
+
+  // TODO get idCube, idSound
+  const idCube = -1;
+  const idSound = -1;
+
   // TODO delete of other the cube
-  delete cubes[idCube];
-  // TODO SEND TO OF
+  delete _cubes[idCube];
+
+  _OFBridge.sendCubeEvent(adrs.CUBE_DISCONNECTED, { idCube, idSound });
 });
 
-_WSServer.on(adrs.CUBE_TOUCHED, (idCube) => {
-  // TODO send to OF the cube of check if a new cube is see into OF.
+_WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
+  console.log('cube Touched');
+  console.log(req.body);
+  // TODO get idCube
+  _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, { idCube: -1 });
 });
 
-_WSServer.on(adrs.CUBE_DRAGGED, (idCube) => {
-  // TODO send to OF the cube of check if a new cube is see into OF.
+_WSServer.onReceiveToHTTP(adrs.CUBE_DRAGGED, (req, res) => {
+  console.log('cube Dragged');
+  // TODO get idCube
+  _OFBridge.sendCubeEvent(adrs.CUBE_DRAGGED, { idCube: -1 });
 });
 
-_WSServer.on(adrs.CUBE_DRAG_END, (idCube) => {
-  // TODO send to OF the cube of check if a new cube is see into OF.
-});
-
-_OFBridge.on(adrs.NBR_CUBE_FOUND, (nbrCubeFound) => {
-  nbrOfCubeFound = nbrCubeFound;
-  _WSServer.sendToWebRender(adrs.NBR_CUBE_FOUND, nbrCubeFound);
+_WSServer.onReceiveToHTTP(adrs.CUBE_DRAG_END, (req, res) => {
+  console.log('cube Drag end');
+  // TODO get idCube
+  _OFBridge.sendCubeEvent(adrs.CUBE_DRAG_END, { idCube: -1 });
 });
 
 /**
-* #########################
-* BRACELETS EVENTS
-* #########################
+* BRACELETS HTTP
 */
-_WSServer.on(adrs.BRACELET_CONNECTED, (idBracelet) => {
-  bracelets[idBracelet] = new Bracelet(idBracelet);
+_WSServer.onReceiveToHTTP(adrs.BRACELET_CONNECTED, (req, res) => {
+  // TODO get idbracelet
+  _bracelets[idBracelet] = new Bracelet(idBracelet);
   // TODO send to OF the bracelet.
 });
-_WSServer.on(adrs.BRACELET_DISCONNECTED, (idBracelet) => {
+_WSServer.onReceiveToHTTP(adrs.BRACELET_DISCONNECTED, (req, res) => {
+  // TODO get idbracelet
   // TODO send to OF the bracelet.
-  delete bracelets[idBracelet];
+  delete _bracelets[idBracelet];
 });
 
 /**
