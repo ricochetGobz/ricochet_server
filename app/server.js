@@ -20,8 +20,9 @@ const _WSServer = new WSServer(() => {
 });
 
 let _openFrameworksConnected = false;
-let _webRenderConnected = false;
 let _kinectConnected = false;
+let _webRenderConnected = false;
+let _galleryConnected = false;
 let _nbrOfCubeFound = 0;
 
 /**
@@ -42,7 +43,7 @@ _OFBridge.onOFStatusChange((isConnected) => {
 
 _OFBridge.onKinectStatusChange((isConnected) => {
   _kinectConnected = isConnected;
-  console.log(`KINECT : ${isConnected ? 'ON' : 'OFF'}`);
+  console.log(`KINECT : ${_kinectConnected ? 'ON' : 'OFF'}`);
 
   _WSServer.postToWebRender(adrs.KINECT_STATUS_CHANGE, _kinectConnected);
 });
@@ -67,13 +68,31 @@ _OFBridge.on(adrs.NBR_CUBE_FOUND, (nbrCubeFound) => {
  */
 _WSServer.onReceiveToSocket(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
   _webRenderConnected = isConnected;
-  console.log(`Web Render : ${isConnected ? 'ON' : 'OFF'}`);
+  console.log(`Web Render : ${_webRenderConnected ? 'ON' : 'OFF'}`);
   _OFBridge.sendWebRenderStatus(_webRenderConnected);
   if (_webRenderConnected) {
     _WSServer.postToWebRender(adrs.KINECT_STATUS_CHANGE, _kinectConnected);
     // console.log(_openFrameworksConnected);
     _WSServer.postToWebRender(adrs.OPEN_FRAMEWORKS_STATUS_CHANGE, _openFrameworksConnected);
     _WSServer.postToWebRender(adrs.NBR_CUBE_FOUND, _nbrOfCubeFound);
+  }
+});
+
+_WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
+  console.log('New composition receive.');
+  _WSServer.postToGallery(adrs.GALLERY_NEW_COMPOSITION, compo);
+});
+
+/**
+* GALLERY
+*/
+_WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
+  _galleryConnected = isConnected;
+  console.log(`Gallery : ${_galleryConnected ? 'ON' : 'OFF'}`);
+
+  if (_galleryConnected) {
+    // TODO envoyer les enregistrements déjà fait.
+    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, ['compositions']);
   }
 });
 
