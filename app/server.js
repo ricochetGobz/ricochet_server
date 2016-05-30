@@ -83,51 +83,46 @@ _WSServer.onReceiveToSocket(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
 _WSServer.onReceiveToHTTP(adrs.CUBE_CONNECTED, (req, res) => {
   console.log('cube connected');
 
-  // TODO get idCube, idSound
-  const idCube = -1;
-  const idSound = -1;
+  const idCube = req.body.cubeId;
+  const idSound = req.body.idSound;
 
+  if (typeof idCube === undefined && idSound === undefined) {
+    console.log('onReceiveToHTTP() ERROR : idCube or idSound undefined');
+    return;
+  }
   _cubes[idCube] = new Cube(idCube, idSound);
+  _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube, idSound });
 
-
-  // TODO res json
   res.json({
     success: true,
     message: '200',
   });
-
-  _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, { idCube, idSound });
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DISCONNECTED, (req, res) => {
+  const idCube = req.body.cubeId;
 
-  // TODO get idCube, idSound
-  const idCube = -1;
-  const idSound = -1;
-
-  // TODO delete of other the cube
+  _OFBridge.sendCubeEvent(adrs.CUBE_DISCONNECTED, { idCube });
   delete _cubes[idCube];
-
-  _OFBridge.sendCubeEvent(adrs.CUBE_DISCONNECTED, { idCube, idSound });
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
-  console.log('cube Touched');
-  console.log(req.body);
-  // TODO get idCube
-  _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, { idCube: -1 });
+  // _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, { idCube: req.body.cubeId });
+
+  // TEMPS
+  _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube: req.body.cubeId, idSound: -1 });
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAGGED, (req, res) => {
   console.log('cube Dragged');
   // TODO get idCube
-  _OFBridge.sendCubeEvent(adrs.CUBE_DRAGGED, { idCube: -1 });
+  _OFBridge.sendCubeEvent(adrs.CUBE_DRAGGED, { idCube: req.body.cubeId });
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAG_END, (req, res) => {
   console.log('cube Drag end');
   // TODO get idCube
-  _OFBridge.sendCubeEvent(adrs.CUBE_DRAG_END, { idCube: -1 });
+  _OFBridge.sendCubeEvent(adrs.CUBE_DRAG_END, { idCube: req.body.cubeId });
 });
 
 /**
