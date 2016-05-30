@@ -8,12 +8,10 @@
 import { server as WebSocketServer } from 'websocket';
 import bodyParser from 'body-parser';
 import express from 'express';
-import fs from 'fs';
 import path from 'path';
 
 import utils from './utils';
 import adrs from './addresses';
-
 
 
 const PORT = process.env.PORT || 8080;
@@ -21,13 +19,13 @@ const PATH = `${__dirname}/../../../ricochet_render/public`;
 
 const URL_RENDER_WEB = `http://localhost:${PORT}`;
 const URL_RENDER_WEB_DEBUG = 'http://localhost:9966'; // for live coding
-// const URL_CUBE = 'TODO';
-// const URL_BRACELET = 'TODO';
+const URL_GALLERY = 'http://localhost:3333';
 
 export default class WSServer {
   constructor(callback) {
     this._listeners = {};
-    this._webRenderConnection = false;
+    this._webRenderConnections = false;
+    this._galleryConnections = false;
 
     // HTTP PART
     this._app = express();
@@ -47,7 +45,7 @@ export default class WSServer {
       callback();
     });
 
-    // WEB SOCKET FOR WEB RENDER
+    // WEB SOCKET FOR WEB RENDER & GALLERY
     this.wsServer = new WebSocketServer({
       httpServer: this._server,
       autoAcceptConnections: false,
@@ -63,18 +61,19 @@ export default class WSServer {
    * #########################
    */
   _checkOrigin(request) {
-    // CHECK IF THE CONNECTED ITEM IS AN CUBE, BRACELET OR WEBREDER
+    // CHECK IF THE CONNECTEITEM IS AN CUBE, BRACELET OR WEBREDER
     switch (request.origin) {
       case URL_RENDER_WEB:
       case URL_RENDER_WEB_DEBUG:
-        this._createWebRenderConnection(request);
+        if (this._webRenderConnection) this._webRenderConnection.close();
+        this._webRenderConnection = this._createConnection(adrs.WEB_RENDER_STATUS_CHANGE, request);
+        this._callListener(adrs.WEB_RENDER_STATUS_CHANGE, true);
         break;
-      // case URL_CUBE:
-      //   this._createCubeConnection(request);
-      //   break;
-      // case URL_BRACELET:
-      //   this._createBraceletConnection(request);
-      //   break;
+      case URL_GALLERY:
+        if (this._galleryConnection) this._galleryConnection.close();
+        this._galleryConnection = this._createConnection(adrs.GALLERY_STATUS_CHANGE, request);
+        this._callListener(adrs.GALLERY_STATUS_CHANGE, true);
+        break;
       default:
         // Make sure we only accept requests from an allowed origin
         request.reject();
@@ -82,59 +81,45 @@ export default class WSServer {
     }
   }
 
-  _createWebRenderConnection(request) {
-    if (this._webRenderConnection) {
-      utils.logError('web render connection already exist');
-      return;
-    }
+  _createConnection(statusChangeAdrs, request) {
+    let c = request.accept('echo-protocol', request.origin);
 
-    this._webRenderConnection = request.accept('echo-protocol', request.origin);
-
-    // CONNECTED
-    this._callListener(adrs.WEB_RENDER_STATUS_CHANGE, true);
-
-    // ON WEB RENDER RECEIVE MESSAGE
-    this._on(this._webRenderConnection, (message) => {
+    // ON RECEIVE MESSAGE
+    this._on(c, (message) => {
       const content = message.utf8Data;
-      console.log(`Web Render send : ${content}`);
+      console.log(`${request.origin} send : ${content}`);
     }, () => {
-      this._webRenderConnection = false;
-      this._callListener(adrs.WEB_RENDER_STATUS_CHANGE, false);
+      c = false;
+      this._callListener(statusChangeAdrs, false);
     });
-  }
 
-  // _createCubeConnection(request) {
-  //   // const connection = request.accept('arduino', request.origin);
-  //   // CONNECTED
-  //
-  //   // TODO GetCubeId && CubeIdSound
-  //   this._callListener(adrs.CUBE_CONNECTED, -1, -1);
-  // }
-  // _createBraceletConnection(request) {
-  //   // const connection = request.accept('arduino', request.origin);
-  //   // CONNECTED
-  //
-  //   // TODO GetBraceletId
-  //   this._callListener(adrs.BRACELET_CONNECTED, -1);
-  // }
+    return c;
+  }
 
   _on(connection, callbackMessage, callbackClose) {
     connection.on('message', (message) => {
       callbackMessage(message);
     });
     connection.on('close', (reasonCode, description) => {
-      utils.logDate(`Peer ${connection.remoteAddress} disconnected.`);
-      utils.logDate(`ReasonCode : ${reasonCode}`);
-      utils.logDate(`Description : ${description}`);
+      // utils.logDate(`Peer ${connection.remoteAddress} disconnected.`);
+      // utils.logDate(`ReasonCode : ${reasonCode}`);
+      // utils.logDate(`Description : ${description}`);
       callbackClose(reasonCode);
     });
   }
 
-  /**
-   * #########################
-   * LISTENERS
-   * #########################
-   */
+  _post(connection, address, data) {
+    if (!utils.addressExist(address)) {
+      console.log(`WSServer._post() ERROR : ${address} doesn't exist.`);
+      return;
+    }
+    if (connection) {
+      connection.sendUTF(JSON.stringify({ address, data }));
+    } else {
+      utils.logError('You cannot send message, the destination is disconnected.');
+    }
+  }
+
   _callListener(address, data) {
     if (!utils.addressExist(address)) {
       console.log(`_callListener ERROR : ${address} doesn't exist.`);
@@ -147,6 +132,11 @@ export default class WSServer {
     console.log(`_callListener ERROR : ${address} not listened`);
   }
 
+  /**
+   * #########################
+   * LISTENERS
+   * #########################
+   */
   onReceiveToSocket(address, callback) {
     if (!utils.addressExist(address)) {
       console.log(`WSServer.on() ERROR : ${address} doesn't exist.`);
@@ -172,20 +162,30 @@ export default class WSServer {
     });
   }
 
+  /**
+   * #########################
+   * POST
+   * #########################
+   */
   postToWebRender(address, data) {
-    if (!utils.addressExist(address)) {
-      console.log(`WSServer.postToWebRender() ERROR : ${address} doesn't exist.`);
-      return;
-    }
-    if (this._webRenderConnection) {
-      this._webRenderConnection.sendUTF(JSON.stringify({ address, data }));
-    } else {
-      utils.logError('You cannot send message, web render is disconnected');
-    }
+    console.log(`    Post to the WebRender -> ${address}`);
+    this._post(this._webRenderConnection, address, data);
   }
 
-  // STATUS
+  postToGallery(address, data) {
+    console.log(`    Post to the Gallery -> ${address}`);
+    this._post(this._galleryConnection, address, data);
+  }
+
+  /**
+   * #########################
+   * STATUS
+   * #########################
+   */
   webRenderConnected() {
     return (this._webRenderConnection);
+  }
+  galleryConnected() {
+    return (this._galleryConnection);
   }
 }
