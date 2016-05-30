@@ -92,7 +92,31 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
 
   if (_galleryConnected) {
     // TODO envoyer les enregistrements déjà fait.
-    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, ['compositions']);
+    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, [{
+      id: '1',
+      title: 'compo1',
+      author: 'author',
+      createdAt: new Date('2016-05-29 15:00:54'),
+      timeline: [],
+    }, {
+      id: '2',
+      title: 'compo2',
+      author: 'author',
+      createdAt: new Date('2016-05-29 10:16:50'),
+      timeline: [],
+    }, {
+      id: '3',
+      title: 'very long composition name',
+      author: 'authr de fifou salut plop',
+      createdAt: new Date('2016-03-20 02:00:57'),
+      timeline: [],
+    }, {
+      id: '4',
+      title: 'trollllolollraomejkflejklsjkljlk',
+      author: 'jkljlkjklsjxsccjk ',
+      createdAt: new Date('2015-12-29 22:16:57'),
+      timeline: [],
+    }]);
   }
 });
 
@@ -115,7 +139,7 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_CONNECTED, (req, res) => {
     message: '200',
   });
 
-  _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, { idCube, idSound });
+  _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube, idSound });
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DISCONNECTED, (req, res) => {
