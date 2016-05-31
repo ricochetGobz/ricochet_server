@@ -9,13 +9,17 @@ import adrs from './addresses';
 
 const util = {
   logError: (message) => {
-    console.warn(`
-      ##### ERROR
-    ${message}
-    `);
+    console.warn(`###ERROR :
+      ${message}`);
   },
   logDate: (message) => {
     console.log(`${new Date()} ${message}`);
+  },
+  logEvent: (message) => {
+    console.log(` -> ${message}`);
+  },
+  logInfo: (message) => {
+    console.log(` ... ${message}`);
   },
   isJSON: (str) => {
     try {

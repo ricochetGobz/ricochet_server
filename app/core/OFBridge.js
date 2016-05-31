@@ -43,11 +43,11 @@ export default class OFBridge {
     const address = msg[0];
     const content = msg[1];
 
-    console.log(`          Message receive to ${address}`);
+    utils.logEvent(`Message received at ${address}`);
 
     if (!this._callListener(address, content)) {
-      console.warn(`${address} address not used`);
-      console.warn(rinfo);
+      utils.logError(`${address} address not used
+        ${rinfo}`);
     }
   }
 
@@ -62,12 +62,12 @@ export default class OFBridge {
 
   _send(address, data) {
     if (!utils.addressExist(address)) {
-      console.log(`OFBridge._send() : ${address} doesn't exist.`);
+      utils.logError(`OFBridge._send() : ${address} doesn't exist.`);
       return;
     }
 
     const d = data || '';
-    console.log(`... ${d} send to ${address}`);
+    utils.logInfo(`${d} sended at ${address}`);
     this._client.send(address, d);
   }
 
@@ -77,7 +77,7 @@ export default class OFBridge {
    */
   on(address, callback) {
     if (!utils.addressExist(address)) {
-      console.log(`OFBridge.on() ERROR : ${address} doesn't exist.`);
+      utils.logError(`OFBridge.on() : ${address} doesn't exist.`);
       return;
     }
     this._listeners[address] = (data) => {

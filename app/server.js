@@ -11,6 +11,7 @@ import CubeController from './core/CubeController';
 import Bracelet from './components/Bracelet';
 
 import adrs from './core/addresses';
+import utils from './core/utils';
 
 const _bracelets = [];
 const _cubeController = new CubeController();
@@ -81,7 +82,7 @@ _OFBridge.on(adrs.NBR_CUBE_FOUND, (nbrCubeFound) => {
  */
 _WSServer.onReceiveToSocket(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
   _webRenderConnected = isConnected;
-  console.log(`Web Render : ${_webRenderConnected ? 'ON' : 'OFF'}`);
+  console.log(`WEB RENDER : ${_webRenderConnected ? 'ON' : 'OFF'}`);
   _OFBridge.sendWebRenderStatus(_webRenderConnected);
   if (_webRenderConnected) {
     _WSServer.postToWebRender(adrs.KINECT_STATUS_CHANGE, _kinectConnected);
@@ -92,7 +93,7 @@ _WSServer.onReceiveToSocket(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
 });
 
 _WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
-  console.log('New composition receive.');
+  utils.logEvent('New composition receive.');
   _WSServer.postToGallery(adrs.GALLERY_NEW_COMPOSITION, compo);
 });
 
@@ -101,7 +102,7 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
 */
 _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
   _galleryConnected = isConnected;
-  console.log(`Gallery : ${_galleryConnected ? 'ON' : 'OFF'}`);
+  console.log(`GALLERY : ${_galleryConnected ? 'ON' : 'OFF'}`);
 
   if (_galleryConnected) {
     // TODO envoyer les enregistrements déjà fait.
@@ -140,7 +141,7 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_CONNECTED, (req, res) => {
   const idCube = req.body.cubeId;
   const idSound = req.body.idSound;
 
-  console.log(`cube ${idCube} connected`);
+  utils.logEvent(`Cube ${idCube} connected`);
 
   createCube(idCube, idSound, () => {
     res.json({
@@ -161,7 +162,7 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
   const idCube = req.body.cubeId;
   const idSound = req.body.idSound;
 
-  console.log(`cube ${idCube} touched`);
+  utils.logEvent(`Cube ${idCube} touched`);
 
   if (!_cubeController.cubeSaved(idCube)) {
     console.warn(`The cube ${idCube} is touched but not saved.`);
@@ -174,7 +175,7 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAGGED, (req, res) => {
   const idCube = req.body.cubeId;
 
-  console.log(`cube ${idCube} dragged`);
+  utils.logEvent(`Cube ${idCube} dragged`);
 
   _OFBridge.sendCubeEvent(adrs.CUBE_DRAGGED, idCube);
 });
@@ -182,7 +183,7 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_DRAGGED, (req, res) => {
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAG_END, (req, res) => {
   const idCube = req.body.cubeId;
 
-  console.log(`cube ${idCube} dragEnd`);
+  utils.logEvent(`cube ${idCube} drag end`);
 
   _OFBridge.sendCubeEvent(adrs.CUBE_DRAG_END, idCube);
 });

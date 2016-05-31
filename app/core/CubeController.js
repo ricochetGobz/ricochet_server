@@ -22,13 +22,13 @@ export default class CubeController {
     }
 
     if (this.cubeSaved(idCube)) {
-      console.log('CubeController.pushCube(): cube already saved.');
+      utils.logError('CubeController.pushCube(): cube already saved.');
     } else {
       this._cubes.push(new Cube(idCube, idSound));
-      console.log('... new cube saved');
+      utils.logInfo('new cube saved');
     }
 
-    console.log(this._cubes);
+    utils.logInfo(this._cubes);
     if (callback) callback();
   }
 
@@ -46,7 +46,7 @@ export default class CubeController {
   }
 
   applyToCubes(callback) {
-    console.log(`... ${this._cubes.length} cubes connected`);
+    utils.logInfo(`${this._cubes.length} cubes connected`);
     for (const cube of this._cubes) {
       callback(cube);
     }
@@ -66,7 +66,7 @@ export default class CubeController {
     for (const cube of this._cubes) {
       return cube;
     }
-    console.warn(utils.logError(`No cubes connected with ${idCube} id.`));
+    utils.logError(`No cubes connected with ${idCube} id.`);
     return false;
   }
 }

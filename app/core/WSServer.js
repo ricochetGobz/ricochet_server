@@ -87,7 +87,7 @@ export default class WSServer {
     // ON RECEIVE MESSAGE
     this._on(c, (message) => {
       const content = message.utf8Data;
-      console.log(`${request.origin} send : ${content}`);
+      utils.logInfo(`${request.origin} send : ${content}`);
     }, () => {
       c = false;
       this._callListener(statusChangeAdrs, false);
@@ -110,7 +110,7 @@ export default class WSServer {
 
   _post(connection, address, data) {
     if (!utils.addressExist(address)) {
-      console.log(`WSServer._post() ERROR : ${address} doesn't exist.`);
+      utils.logError(`WSServer._post() : ${address} doesn't exist.`);
       return;
     }
     if (connection) {
@@ -122,14 +122,14 @@ export default class WSServer {
 
   _callListener(address, data) {
     if (!utils.addressExist(address)) {
-      console.log(`_callListener ERROR : ${address} doesn't exist.`);
+      utils.logError(`WSServer._callListener() : ${address} doesn't exist.`);
       return;
     }
     if (this._listeners[address]) {
       this._listeners[address](data);
       return;
     }
-    console.log(`_callListener ERROR : ${address} not listened`);
+    utils.logError(`WSServer._callListener() : ${address} not listened`);
   }
 
   /**
@@ -139,7 +139,7 @@ export default class WSServer {
    */
   onReceiveToSocket(address, callback) {
     if (!utils.addressExist(address)) {
-      console.log(`WSServer.on() ERROR : ${address} doesn't exist.`);
+      utils.logError(`WSServer.onReceiveToSocket() : ${address} doesn't exist.`);
       return;
     }
 
@@ -154,7 +154,7 @@ export default class WSServer {
 
   onReceiveToHTTP(address, callback) {
     if (!utils.addressExist(address)) {
-      console.log(`WSServer.post() ERROR : ${address} doesn't exist.`);
+      utils.logError(`WSServer.post() : ${address} doesn't exist.`);
       return;
     }
     this._app.post(address, (req, res) => {
@@ -168,12 +168,12 @@ export default class WSServer {
    * #########################
    */
   postToWebRender(address, data) {
-    console.log(`    Post to the WebRender -> ${address}`);
+    utils.logInfo(`Post to the WebRender -> ${address}`);
     this._post(this._webRenderConnection, address, data);
   }
 
   postToGallery(address, data) {
-    console.log(`    Post to the Gallery -> ${address}`);
+    utils.logInfo(`Post to the Gallery -> ${address}`);
     this._post(this._galleryConnection, address, data);
   }
 
