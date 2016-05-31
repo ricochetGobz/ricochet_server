@@ -28,7 +28,7 @@ let _nbrOfCubeFound = 0;
 
 function createCube(idCube, idSound, callback) {
   _cubeController.pushCube(idCube, idSound, () => {
-    _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube, idSound });
+    _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, idCube, idSound);
     if (callback) callback();
   });
 }
@@ -47,9 +47,7 @@ _OFBridge.onOFStatusChange((isConnected) => {
     _OFBridge.sendWebRenderStatus(_webRenderConnected);
 
     _cubeController.applyToCubes((cube) => {
-      _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED,
-        { idCube: cube.id, idSound: cube.sound }
-      );
+      _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, cube.id, cube.sound);
     });
   }
 
@@ -139,10 +137,10 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
 * CUBE HTTP
 */
 _WSServer.onReceiveToHTTP(adrs.CUBE_CONNECTED, (req, res) => {
-  console.log('cube connected');
-
   const idCube = req.body.cubeId;
   const idSound = req.body.idSound;
+
+  console.log(`cube ${idCube} connected`);
 
   createCube(idCube, idSound, () => {
     res.json({
@@ -155,7 +153,7 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_CONNECTED, (req, res) => {
 _WSServer.onReceiveToHTTP(adrs.CUBE_DISCONNECTED, (req, res) => {
   const idCube = req.body.cubeId;
 
-  _OFBridge.sendCubeEvent(adrs.CUBE_DISCONNECTED, { idCube });
+  _OFBridge.sendCubeEvent(adrs.CUBE_DISCONNECTED, idCube);
   _cubeController.removeCube(idCube);
 });
 
@@ -170,19 +168,23 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
     createCube(idCube, idSound);
   }
 
-  _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, { idCube, idSound });
+  _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, idCube, idSound);
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAGGED, (req, res) => {
-  console.log('cube Dragged');
-  // TODO get idCube
-  _OFBridge.sendCubeEvent(adrs.CUBE_DRAGGED, { idCube: req.body.cubeId });
+  const idCube = req.body.cubeId;
+
+  console.log(`cube ${idCube} dragged`);
+
+  _OFBridge.sendCubeEvent(adrs.CUBE_DRAGGED, idCube);
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAG_END, (req, res) => {
-  console.log('cube Drag end');
-  // TODO get idCube
-  _OFBridge.sendCubeEvent(adrs.CUBE_DRAG_END, { idCube: req.body.cubeId });
+  const idCube = req.body.cubeId;
+
+  console.log(`cube ${idCube} dragEnd`);
+
+  _OFBridge.sendCubeEvent(adrs.CUBE_DRAG_END, idCube);
 });
 
 /**

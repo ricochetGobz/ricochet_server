@@ -21,11 +21,11 @@ export default class CubeController {
       return;
     }
 
-    if(this.cubeSaved(idCube)){
+    if (this.cubeSaved(idCube)) {
       console.log('CubeController.pushCube(): cube already saved.');
     } else {
       this._cubes.push(new Cube(idCube, idSound));
-      console.log("... new cube saved");
+      console.log('... new cube saved');
     }
 
     console.log(this._cubes);
@@ -34,7 +34,7 @@ export default class CubeController {
 
   removeCube(idCube) {
     let i;
-    for( i = 0; i < this._cubes.length; i++) {
+    for (i = 0; i < this._cubes.length; i++) {
       if (this._cubes[i].id === idCube) {
         delete this._cubes[i];
         return;
@@ -46,15 +46,15 @@ export default class CubeController {
   }
 
   applyToCubes(callback) {
-    console.log(`... ${cubesLength} cubes connected`);
+    console.log(`... ${this._cubes.length} cubes connected`);
     for (const cube of this._cubes) {
       callback(cube);
     }
   }
 
   cubeSaved(idCube) {
-    if(idCube === undefined) {
-      utils.logError('CubeController.cubeSaved: idCube undefined');
+    if (idCube === 'undefined') {
+      utils.logError('CubeController.cubeSaved(): idCube undefined');
     }
     for (const cube of this._cubes) {
       if (cube.id === idCube) return true;
