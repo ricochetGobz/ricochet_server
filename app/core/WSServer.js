@@ -86,8 +86,16 @@ export default class WSServer {
 
     // ON RECEIVE MESSAGE
     this._on(c, (message) => {
-      const content = message.utf8Data;
-      utils.logInfo(`${request.origin} send : ${content}`);
+      const content = JSON.parse(message.utf8Data);
+      const address = content.address;
+      const data = content.data;
+      utils.logInfo(`${request.origin} send -> ${content}`);
+
+      if (address && data) {
+        this._callListener(address, data);
+      } else {
+        utils.logError('WSServer._on() : WS message have not the good structure');
+      }
     }, () => {
       c = false;
       this._callListener(statusChangeAdrs, false);

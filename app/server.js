@@ -93,7 +93,13 @@ _WSServer.onReceiveToSocket(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
 });
 
 _WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
-  utils.logEvent('New composition receive.');
+  utils.logEvent('New composition receive : ');
+
+  if (typeof compo !== 'object') {
+    utils.logError(`The composition received is not an object : ${compo}`);
+    return;
+  }
+
   _WSServer.postToGallery(adrs.GALLERY_NEW_COMPOSITION, compo);
 });
 
