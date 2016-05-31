@@ -7,13 +7,13 @@
 
 import OFBridge from './core/OFBridge';
 import WSServer from './core/WSServer';
-import Cube from './components/Cube';
+import CubeController from './core/CubeController';
 import Bracelet from './components/Bracelet';
 
 import adrs from './core/addresses';
 
-const _cubes = {};
-const _bracelets = {};
+const _bracelets = [];
+const _cubeController = new CubeController();
 const _OFBridge = new OFBridge();
 const _WSServer = new WSServer(() => {
   _OFBridge.sendServerStatus(true);
@@ -24,6 +24,14 @@ let _kinectConnected = false;
 let _webRenderConnected = false;
 let _galleryConnected = false;
 let _nbrOfCubeFound = 0;
+
+
+function createCube(idCube, idSound, callback) {
+  _cubeController.pushCube(idCube, idSound, () => {
+    _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube, idSound });
+    if (callback) callback();
+  });
+}
 
 /**
  * #########################
@@ -37,7 +45,14 @@ _OFBridge.onOFStatusChange((isConnected) => {
   if (_openFrameworksConnected) {
     _OFBridge.sendServerStatus(_openFrameworksConnected);
     _OFBridge.sendWebRenderStatus(_webRenderConnected);
+
+    _cubeController.applyToCubes((cube) => {
+      _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED,
+        { idCube: cube.id, idSound: cube.sound }
+      );
+    });
   }
+
   _WSServer.postToWebRender(adrs.OPEN_FRAMEWORKS_STATUS_CHANGE, _openFrameworksConnected);
 });
 
@@ -129,33 +144,33 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_CONNECTED, (req, res) => {
   const idCube = req.body.cubeId;
   const idSound = req.body.idSound;
 
-  if (typeof idCube === undefined && idSound === undefined) {
-    console.log('onReceiveToHTTP() ERROR : idCube or idSound undefined');
-    return;
-  }
-  _cubes[idCube] = new Cube(idCube, idSound);
-  _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube, idSound });
-
-  res.json({
-    success: true,
-    message: '200',
+  createCube(idCube, idSound, () => {
+    res.json({
+      success: true,
+      message: '200',
+    });
   });
-
-  _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube, idSound });
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DISCONNECTED, (req, res) => {
   const idCube = req.body.cubeId;
 
   _OFBridge.sendCubeEvent(adrs.CUBE_DISCONNECTED, { idCube });
-  delete _cubes[idCube];
+  _cubeController.removeCube(idCube);
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
-  // _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, { idCube: req.body.cubeId });
+  const idCube = req.body.cubeId;
+  const idSound = req.body.idSound;
 
-  // TEMPS
-  _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube: req.body.cubeId, idSound: -1 });
+  console.log(`cube ${idCube} touched`);
+
+  if (!_cubeController.cubeSaved(idCube)) {
+    console.warn(`The cube ${idCube} is touched but not saved.`);
+    createCube(idCube, idSound);
+  }
+
+  _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, { idCube, idSound });
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAGGED, (req, res) => {
