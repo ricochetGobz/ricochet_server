@@ -9,4 +9,8 @@ export default class Bracelet {
   constructor(idBracelet) {
     this.id = idBracelet;
   }
+
+  isConnected() {
+    return (this.id !== -1);
+  }
 }

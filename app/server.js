@@ -7,15 +7,19 @@
 
 import OFBridge from './core/OFBridge';
 import WSServer from './core/WSServer';
-import Cube from './components/Cube';
+import CubeController from './core/CubeController';
 import Bracelet from './components/Bracelet';
 
 import adrs from './core/addresses';
+import utils from './core/utils';
+
+import DataCompo from './core/compositions';
 
 var fs = require('fs');
 
-const _cubes = {};
-const _bracelets = {};
+const _bracelets = [];
+const _cubeController = new CubeController();
+
 const _OFBridge = new OFBridge();
 const _WSServer = new WSServer(() => {
   _OFBridge.sendServerStatus(true);
@@ -26,6 +30,14 @@ let _kinectConnected = false;
 let _webRenderConnected = false;
 let _galleryConnected = false;
 let _nbrOfCubeFound = 0;
+
+
+function createCube(idCube, idSound, callback) {
+  _cubeController.pushCube(idCube, idSound, () => {
+    _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, idCube, idSound);
+    if (callback) callback();
+  });
+}
 
 /**
  * #########################
@@ -39,7 +51,12 @@ _OFBridge.onOFStatusChange((isConnected) => {
   if (_openFrameworksConnected) {
     _OFBridge.sendServerStatus(_openFrameworksConnected);
     _OFBridge.sendWebRenderStatus(_webRenderConnected);
+
+    _cubeController.applyToCubes((cube) => {
+      _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, cube.id, cube.sound);
+    });
   }
+
   _WSServer.postToWebRender(adrs.OPEN_FRAMEWORKS_STATUS_CHANGE, _openFrameworksConnected);
 });
 
@@ -70,7 +87,7 @@ _OFBridge.on(adrs.NBR_CUBE_FOUND, (nbrCubeFound) => {
  */
 _WSServer.onReceiveToSocket(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
   _webRenderConnected = isConnected;
-  console.log(`Web Render : ${_webRenderConnected ? 'ON' : 'OFF'}`);
+  console.log(`WEB RENDER : ${_webRenderConnected ? 'ON' : 'OFF'}`);
   _OFBridge.sendWebRenderStatus(_webRenderConnected);
   if (_webRenderConnected) {
     _WSServer.postToWebRender(adrs.KINECT_STATUS_CHANGE, _kinectConnected);
@@ -81,7 +98,36 @@ _WSServer.onReceiveToSocket(adrs.WEB_RENDER_STATUS_CHANGE, (isConnected) => {
 });
 
 _WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
-  console.log('New composition receive.');
+  utils.logEvent('New composition receive : ');
+
+  if (typeof compo !== 'object') {
+    utils.logError(`The composition received is not an object : ${compo}`);
+    return;
+  }
+
+  var fileName = 'app/core/compositions.json';
+  fs.exists(fileName, function(exists) {
+  if (exists) {
+    fs.stat(fileName, function(error, stats) {
+      fs.open(fileName, "r", function(error, fd) {
+        var buffer = new Buffer("stats.size");
+
+        fs.writeFile(fileName, JSON.stringify(compo), 0, "utf8", function(error, bytesRead, buffer) {
+          fs.read(fd, buffer, 0, buffer.length, null, function(error, bytesRead, buffer) {
+            var data = buffer.toString("utf8", 0, buffer.length);
+
+            console.log(data);
+            fs.close(fd);
+          });
+        });
+      });
+    });
+    // var buffer = new Buffer(JSON.stringify(compo));
+
+
+  } else console.log("NIQUE TOI")
+  });
+
   _WSServer.postToGallery(adrs.GALLERY_NEW_COMPOSITION, compo);
 });
 
@@ -90,66 +136,12 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
 */
 _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
   _galleryConnected = isConnected;
-  console.log(`Gallery : ${_galleryConnected ? 'ON' : 'OFF'}`);
+  console.log(`GALLERY : ${_galleryConnected ? 'ON' : 'OFF'}`);
 
   if (_galleryConnected) {
 
-    let compo = {
-      id: '1',
-      title: 'compo1',
-      author: 'author',
-      createdAt: new Date('2016-05-29 15:00:54'),
-      timeline: [],
-    };
-    var fileName = 'app/core/compositions.json';
-    fs.exists(fileName, function(exists) {
-    if (exists) {
-      fs.stat(fileName, function(error, stats) {
-        fs.open(fileName, "r", function(error, fd) {
-          var buffer = new Buffer("stats.size");
-
-          fs.writeFile(fileName, JSON.stringify(compo), 0, "utf8", function(error, bytesRead, buffer) {
-            fs.read(fd, buffer, 0, buffer.length, null, function(error, bytesRead, buffer) {
-              var data = buffer.toString("utf8", 0, buffer.length);
-
-              console.log(data);
-              fs.close(fd);
-            });
-          });
-        });
-      });
-      // var buffer = new Buffer(JSON.stringify(compo));
-
-
-    } else console.log("NIQUE TOI")
-  });
-
     // TODO envoyer les enregistrements déjà fait.
-    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, [{
-      id: '1',
-      title: 'compo1',
-      author: 'author',
-      createdAt: new Date('2016-05-29 15:00:54'),
-      timeline: [],
-    }, {
-      id: '2',
-      title: 'compo2',
-      author: 'author',
-      createdAt: new Date('2016-05-29 10:16:50'),
-      timeline: [],
-    }, {
-      id: '3',
-      title: 'very long composition name',
-      author: 'authr de fifou salut plop',
-      createdAt: new Date('2016-03-20 02:00:57'),
-      timeline: [],
-    }, {
-      id: '4',
-      title: 'trollllolollraomejkflejklsjkljlk',
-      author: 'jkljlkjklsjxsccjk ',
-      createdAt: new Date('2015-12-29 22:16:57'),
-      timeline: [],
-    }]);
+    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, [DataCompo]);
   }
 });
 
@@ -157,50 +149,54 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
 * CUBE HTTP
 */
 _WSServer.onReceiveToHTTP(adrs.CUBE_CONNECTED, (req, res) => {
-  console.log('cube connected');
-
   const idCube = req.body.cubeId;
   const idSound = req.body.idSound;
 
-  if (typeof idCube === undefined && idSound === undefined) {
-    console.log('onReceiveToHTTP() ERROR : idCube or idSound undefined');
-    return;
-  }
-  _cubes[idCube] = new Cube(idCube, idSound);
-  _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube, idSound });
+  utils.logEvent(`Cube ${idCube} connected`);
 
-  res.json({
-    success: true,
-    message: '200',
+  createCube(idCube, idSound, () => {
+    res.json({
+      success: true,
+      message: '200',
+    });
   });
-
-  _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube, idSound });
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DISCONNECTED, (req, res) => {
   const idCube = req.body.cubeId;
 
-  _OFBridge.sendCubeEvent(adrs.CUBE_DISCONNECTED, { idCube });
-  delete _cubes[idCube];
+  _OFBridge.sendCubeEvent(adrs.CUBE_DISCONNECTED, idCube);
+  _cubeController.removeCube(idCube);
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
-  // _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, { idCube: req.body.cubeId });
+  const idCube = req.body.cubeId;
+  const idSound = req.body.idSound;
 
-  // TEMPS
-  _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, { idCube: req.body.cubeId, idSound: -1 });
+  utils.logEvent(`Cube ${idCube} touched`);
+
+  if (!_cubeController.cubeSaved(idCube)) {
+    console.warn(`The cube ${idCube} is touched but not saved.`);
+    createCube(idCube, idSound);
+  }
+
+  _OFBridge.sendCubeEvent(adrs.CUBE_TOUCHED, idCube, idSound);
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAGGED, (req, res) => {
-  console.log('cube Dragged');
-  // TODO get idCube
-  _OFBridge.sendCubeEvent(adrs.CUBE_DRAGGED, { idCube: req.body.cubeId });
+  const idCube = req.body.cubeId;
+
+  utils.logEvent(`Cube ${idCube} dragged`);
+
+  _OFBridge.sendCubeEvent(adrs.CUBE_DRAGGED, idCube);
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAG_END, (req, res) => {
-  console.log('cube Drag end');
-  // TODO get idCube
-  _OFBridge.sendCubeEvent(adrs.CUBE_DRAG_END, { idCube: req.body.cubeId });
+  const idCube = req.body.cubeId;
+
+  utils.logEvent(`cube ${idCube} drag end`);
+
+  _OFBridge.sendCubeEvent(adrs.CUBE_DRAG_END, idCube);
 });
 
 /**

@@ -11,4 +11,8 @@ export default class Cube {
     this.sound = idSound;
     this.position = false;
   }
+
+  isDetected() {
+    return this.position;
+  }
 }
