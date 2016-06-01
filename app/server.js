@@ -144,29 +144,29 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
 * CUBE HTTP
 */
 _WSServer.onReceiveToHTTP(adrs.CUBE_CONNECTED, (req, res) => {
-  const idCube = req.body.cubeId;
-  const idSound = req.body.idSound;
+  const idCube = parseInt(req.body.cubeId, 10);
+  const idSound = parseInt(req.body.idSound, 10);
 
   utils.logEvent(`Cube ${idCube} connected`);
 
   createCube(idCube, idSound, () => {
-    res.json({
-      success: true,
-      message: '200',
-    });
+    res.json({ success: true, message: '200' });
   });
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DISCONNECTED, (req, res) => {
-  const idCube = req.body.cubeId;
+  res.json({ success: true, message: '200' });
+  const idCube = parseInt(req.body.cubeId, 10);
 
   _OFBridge.sendCubeEvent(adrs.CUBE_DISCONNECTED, idCube);
   _cubeController.removeCube(idCube);
+
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
-  const idCube = req.body.cubeId;
-  const idSound = req.body.idSound;
+  res.json({ success: true, message: '200' });
+  const idCube = parseInt(req.body.cubeId, 10);
+  const idSound = parseInt(req.body.idSound, 10);
 
   utils.logEvent(`Cube ${idCube} touched`);
 
@@ -179,17 +179,31 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAGGED, (req, res) => {
-  const idCube = req.body.cubeId;
+  res.json({ success: true, message: '200' });
+  const idCube = parseInt(req.body.cubeId, 10);
+  const idSound = parseInt(req.body.idSound, 10);
 
   utils.logEvent(`Cube ${idCube} dragged`);
+
+  if (!_cubeController.cubeSaved(idCube)) {
+    console.warn(`The cube ${idCube} is touched but not saved.`);
+    createCube(idCube, idSound);
+  }
 
   _OFBridge.sendCubeEvent(adrs.CUBE_DRAGGED, idCube);
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_DRAG_END, (req, res) => {
-  const idCube = req.body.cubeId;
+  res.json({ success: true, message: '200' });
+  const idCube = parseInt(req.body.cubeId, 10);
+  const idSound = parseInt(req.body.idSound, 10);
 
   utils.logEvent(`cube ${idCube} drag end`);
+
+  if (!_cubeController.cubeSaved(idCube)) {
+    console.warn(`The cube ${idCube} is touched but not saved.`);
+    createCube(idCube, idSound);
+  }
 
   _OFBridge.sendCubeEvent(adrs.CUBE_DRAG_END, idCube);
 });
@@ -198,11 +212,13 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_DRAG_END, (req, res) => {
 * BRACELETS HTTP
 */
 _WSServer.onReceiveToHTTP(adrs.BRACELET_CONNECTED, (req, res) => {
+  res.json({ success: true, message: '200' });
   // TODO get idbracelet
   _bracelets[idBracelet] = new Bracelet(idBracelet);
   // TODO send to OF the bracelet.
 });
 _WSServer.onReceiveToHTTP(adrs.BRACELET_DISCONNECTED, (req, res) => {
+  res.json({ success: true, message: '200' });
   // TODO get idbracelet
   // TODO send to OF the bracelet.
   delete _bracelets[idBracelet];

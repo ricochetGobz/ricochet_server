@@ -166,8 +166,9 @@ export default class OFBridge {
 
   // SENDERS
   sendCubeEvent(address, idCube, idSound) {
-    if (typeof idCube !== 'number') {
-      utils.logError('OFBridge.sendCubeEvent() -- idCube not passed or are not a number');
+    if (typeof idCube === 'undefined') {
+      utils.logError(`OFBridge.sendCubeEvent() -- idCube not passed or are not a number.
+        It is a ${typeof idCube}.`);
       return;
     }
 
