@@ -12,6 +12,8 @@ import Bracelet from './components/Bracelet';
 
 import adrs from './core/addresses';
 
+var fs = require('fs');
+
 const _cubes = {};
 const _bracelets = {};
 const _OFBridge = new OFBridge();
@@ -91,6 +93,37 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
   console.log(`Gallery : ${_galleryConnected ? 'ON' : 'OFF'}`);
 
   if (_galleryConnected) {
+
+    let compo = {
+      id: '1',
+      title: 'compo1',
+      author: 'author',
+      createdAt: new Date('2016-05-29 15:00:54'),
+      timeline: [],
+    };
+    var fileName = 'app/core/compositions.json';
+    fs.exists(fileName, function(exists) {
+    if (exists) {
+      fs.stat(fileName, function(error, stats) {
+        fs.open(fileName, "r", function(error, fd) {
+          var buffer = new Buffer("stats.size");
+
+          fs.writeFile(fileName, JSON.stringify(compo), 0, "utf8", function(error, bytesRead, buffer) {
+            fs.read(fd, buffer, 0, buffer.length, null, function(error, bytesRead, buffer) {
+              var data = buffer.toString("utf8", 0, buffer.length);
+
+              console.log(data);
+              fs.close(fd);
+            });
+          });
+        });
+      });
+      // var buffer = new Buffer(JSON.stringify(compo));
+
+
+    } else console.log("NIQUE TOI")
+  });
+
     // TODO envoyer les enregistrements déjà fait.
     _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, [{
       id: '1',
