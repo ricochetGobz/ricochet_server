@@ -13,8 +13,13 @@ import Bracelet from './components/Bracelet';
 import adrs from './core/addresses';
 import utils from './core/utils';
 
+import DataCompo from './core/compositions';
+
+var fs = require('fs');
+
 const _bracelets = [];
 const _cubeController = new CubeController();
+
 const _OFBridge = new OFBridge();
 const _WSServer = new WSServer(() => {
   _OFBridge.sendServerStatus(true);
@@ -100,6 +105,29 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
     return;
   }
 
+  var fileName = 'app/core/compositions.json';
+  fs.exists(fileName, function(exists) {
+  if (exists) {
+    fs.stat(fileName, function(error, stats) {
+      fs.open(fileName, "r", function(error, fd) {
+        var buffer = new Buffer("stats.size");
+
+        fs.writeFile(fileName, JSON.stringify(compo), 0, "utf8", function(error, bytesRead, buffer) {
+          fs.read(fd, buffer, 0, buffer.length, null, function(error, bytesRead, buffer) {
+            var data = buffer.toString("utf8", 0, buffer.length);
+
+            console.log(data);
+            fs.close(fd);
+          });
+        });
+      });
+    });
+    // var buffer = new Buffer(JSON.stringify(compo));
+
+
+  } else console.log("NIQUE TOI")
+  });
+
   _WSServer.postToGallery(adrs.GALLERY_NEW_COMPOSITION, compo);
 });
 
@@ -111,32 +139,9 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
   console.log(`GALLERY : ${_galleryConnected ? 'ON' : 'OFF'}`);
 
   if (_galleryConnected) {
+
     // TODO envoyer les enregistrements déjà fait.
-    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, [{
-      id: '1',
-      title: 'compo1',
-      author: 'author',
-      createdAt: new Date('2016-05-29 15:00:54'),
-      timeline: [],
-    }, {
-      id: '2',
-      title: 'compo2',
-      author: 'author',
-      createdAt: new Date('2016-05-29 10:16:50'),
-      timeline: [],
-    }, {
-      id: '3',
-      title: 'very long composition name',
-      author: 'authr de fifou salut plop',
-      createdAt: new Date('2016-03-20 02:00:57'),
-      timeline: [],
-    }, {
-      id: '4',
-      title: 'trollllolollraomejkflejklsjkljlk',
-      author: 'jkljlkjklsjxsccjk ',
-      createdAt: new Date('2015-12-29 22:16:57'),
-      timeline: [],
-    }]);
+    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, [DataCompo]);
   }
 });
 
