@@ -160,7 +160,6 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_DISCONNECTED, (req, res) => {
 
   _OFBridge.sendCubeEvent(adrs.CUBE_DISCONNECTED, idCube);
   _cubeController.removeCube(idCube);
-
 });
 
 _WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
@@ -182,6 +181,8 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_DRAGGED, (req, res) => {
   res.json({ success: true, message: '200' });
   const idCube = parseInt(req.body.cubeId, 10);
   const idSound = parseInt(req.body.idSound, 10);
+
+  console.log(req.body);
 
   utils.logEvent(`Cube ${idCube} dragged`);
 
@@ -208,15 +209,35 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_DRAG_END, (req, res) => {
   _OFBridge.sendCubeEvent(adrs.CUBE_DRAG_END, idCube);
 });
 
+_WSServer.onReceiveToHTTP(adrs.CUBE_FACE_CHANGED, (req, res) => {
+  res.json({ success: true, message: '200' });
+  const idCube = parseInt(req.body.cubeId, 10);
+  const idSound = parseInt(req.body.idSound, 10);
+
+  utils.logEvent(`cube ${idCube} face changed ${idSound}`);
+
+  if (!_cubeController.cubeSaved(idCube)) {
+    console.warn(`The cube ${idCube} is touched but not saved.`);
+    createCube(idCube, idSound);
+  }
+
+  _OFBridge.sendCubeEvent(adrs.CUBE_FACE_CHANGED, idCube, idSound);
+});
+
 /**
 * BRACELETS HTTP
 */
 _WSServer.onReceiveToHTTP(adrs.BRACELET_CONNECTED, (req, res) => {
   res.json({ success: true, message: '200' });
-  // TODO get idbracelet
-  _bracelets[idBracelet] = new Bracelet(idBracelet);
-  // TODO send to OF the bracelet.
+  const IPAddress = req.body.braceletIp;
+
+  console.log(req.body);
+
+  utils.logEvent(`bracelet connected at ${IPAddress}`);
+
+  _bracelets.push(new Bracelet(IPAddress));
 });
+
 _WSServer.onReceiveToHTTP(adrs.BRACELET_DISCONNECTED, (req, res) => {
   res.json({ success: true, message: '200' });
   // TODO get idbracelet

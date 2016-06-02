@@ -28,6 +28,7 @@ const adresses = {
   CUBE_DRAGGED: '/cube/dragged',
   CUBE_DRAG_END: '/cube/dragend',
   CUBE_PLAYED: '/cube/played',
+  CUBE_FACE_CHANGED: '/cube/facechanged',
   // Cubes
   NBR_CUBE_FOUND: '/cubes/nfound',
   // Bracelet

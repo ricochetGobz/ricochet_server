@@ -6,11 +6,13 @@
  */
 
 export default class Bracelet {
-  constructor(idBracelet) {
-    this.id = idBracelet;
+  constructor(IPAddress) {
+    this.IPAddress = IPAddress;
+
+    // TODO create firmata
   }
 
   isConnected() {
-    return (this.id !== -1);
+    return (this.IPAddress !== -1);
   }
 }
