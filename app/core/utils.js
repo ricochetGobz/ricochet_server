@@ -29,6 +29,7 @@ const util = {
     }
     return true;
   },
+  getRandomInt: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
   addressExist: (adr) => {
     for (const key in adrs) {
       if (adrs[key] === adr) return true;

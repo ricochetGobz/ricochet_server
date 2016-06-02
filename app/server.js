@@ -68,7 +68,13 @@ _OFBridge.onKinectStatusChange((isConnected) => {
 });
 
 _OFBridge.on(adrs.CUBE_PLAYED, (d) => {
+  console.log("cube played, TODO get noteId");
+  console.log(d);
   _WSServer.postToWebRender(adrs.CUBE_PLAYED, JSON.stringify(d));
+
+  for (let i = 0; i < _bracelets.length; i++) {
+    _bracelets[i].playNote(parseInt(utils.getRandomInt(1, 6), 10));// TODO
+  }
 });
 
 _OFBridge.on(adrs.NBR_CUBE_FOUND, (nbrCubeFound) => {
