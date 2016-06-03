@@ -12,8 +12,8 @@ const VEL = 2;
 const TIMER = 5;
 
 const MAX_SENSOR = 255;
-const MEDIUM_SENSOR = 150;
-const MIN_SENSOR = 80;
+const MEDIUM_SENSOR = 180;
+const MIN_SENSOR = 100;
 
 
 export default class Bracelet {
