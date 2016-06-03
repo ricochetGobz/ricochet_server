@@ -13,7 +13,7 @@ import Bracelet from './components/Bracelet';
 import adrs from './core/addresses';
 import utils from './core/utils';
 
-import DataCompo from './core/compositions';
+import compositionsData from './core/compositions';
 
 var fs = require('fs');
 
@@ -111,29 +111,23 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
     return;
   }
 
-  var fileName = 'app/core/compositions.json';
-  fs.exists(fileName, function(exists) {
-  if (exists) {
-    fs.stat(fileName, function(error, stats) {
-      fs.open(fileName, "r", function(error, fd) {
-        var buffer = new Buffer("stats.size");
-
-        fs.writeFile(fileName, JSON.stringify(compo), 0, "utf8", function(error, bytesRead, buffer) {
-          fs.read(fd, buffer, 0, buffer.length, null, function(error, bytesRead, buffer) {
-            var data = buffer.toString("utf8", 0, buffer.length);
-
-            console.log(data);
-            fs.close(fd);
-          });
-        });
+  // SAVE COMPOSITION INTO FILE
+  compo.id = compositionsData.compositions.length;
+  compositionsData.compositions.push(compo);
+  const compositionsFile = 'app/core/compositions.json';
+  fs.exists(compositionsFile, (exists) => {
+    if (exists) {
+      fs.writeFile(compositionsFile, JSON.stringify(compositionsData), (err) => {
+        if (err) throw err;
+        utils.logInfo(`New composition saved.
+          ${compositionsData.compositions.length} composition(s)`);
       });
-    });
-    // var buffer = new Buffer(JSON.stringify(compo));
-
-
-  } else console.log("NIQUE TOI")
+    } else {
+      utils.logError(`${compositionsFile} not found.`);
+    }
   });
 
+  // Send new composition into server
   _WSServer.postToGallery(adrs.GALLERY_NEW_COMPOSITION, compo);
 });
 
@@ -145,9 +139,8 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
   console.log(`GALLERY : ${_galleryConnected ? 'ON' : 'OFF'}`);
 
   if (_galleryConnected) {
-
     // TODO envoyer les enregistrements déjà fait.
-    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, [DataCompo]);
+    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, [compositionsData]);
   }
 });
 
