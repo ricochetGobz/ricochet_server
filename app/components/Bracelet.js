@@ -73,39 +73,37 @@ export default class Bracelet {
 
   _initMotors() {
     console.log('init motors');
-    this._initMotor(this.leftMotor.five, 3);
-    this._initMotor(this.rightMotor.five, 4);
+    this._initMotor(this.leftMotor, 'D0');
+    this._initMotor(this.rightMotor, 'D1');
   }
 
   _initMotor(motor, pin) {
-    motor = new five.Motor({ pin });
+    motor.five = new five.Motor({ pin });
 
-    motor.on('start', () => {
+    motor.five.on('start', () => {
       console.log('start', Date.now());
     });
 
-    motor.on('stop', () => {
+    motor.five.on('stop', () => {
       console.log('stop', Date.now());
     });
 
-    motor.start();
+    motor.five.start(0);
   }
 
   _setSpeed(motor, speed) {
-    console.log('set speed');
     if (motor.speed < speed) {
       motor.speed = speed;
 
       if (!motor.active) {
         motor.active = true;
-        this.decrementSpeed(motor);
+        this._decrementSpeed(motor);
       }
     }
   }
 
   _decrementSpeed(motor) {
     motor.speed -= VEL;
-    console.log(motor.speed);
 
     motor.five.speed(motor.speed);
 
