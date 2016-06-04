@@ -5,6 +5,8 @@
  *
  */
 
+import fs from 'fs';
+
 import OFBridge from './core/OFBridge';
 import WSServer from './core/WSServer';
 import CubeController from './core/CubeController';
@@ -12,10 +14,8 @@ import Bracelet from './components/Bracelet';
 
 import adrs from './core/addresses';
 import utils from './core/utils';
-
 import compositionsData from './core/compositions';
 
-var fs = require('fs');
 
 const _bracelets = [];
 const _cubeController = new CubeController();
@@ -73,7 +73,7 @@ _OFBridge.on(adrs.CUBE_PLAYED, (d) => {
   const soundId = d.soundId;
 
   for (let i = 0; i < _bracelets.length; i++) {
-    _bracelets[i].playNote(parseInt(soundId, 10));// TODO
+    _bracelets[i].playNote(parseInt(soundId, 10));
   }
 });
 
@@ -113,7 +113,7 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
 
   // SAVE COMPOSITION INTO FILE
   compo.id = compositionsData.compositions.length;
-  compositionsData.compositions.push(compo);
+  compositionsData.compositions.unshift(compo);
   const compositionsFile = 'app/core/compositions.json';
   fs.exists(compositionsFile, (exists) => {
     if (exists) {
@@ -139,8 +139,7 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
   console.log(`GALLERY : ${_galleryConnected ? 'ON' : 'OFF'}`);
 
   if (_galleryConnected) {
-    // TODO envoyer les enregistrements déjà fait.
-    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, [compositionsData]);
+    _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, compositionsData.compositions);
   }
 });
 
@@ -235,9 +234,14 @@ _WSServer.onReceiveToHTTP(adrs.BRACELET_CONNECTED, (req, res) => {
   res.json({ success: true, message: '200' });
   const IPAddress = req.body.braceletIp;
 
-  console.log(req.body);
-
   utils.logEvent(`bracelet connected at ${IPAddress}`);
+
+  // for (let i = 0; i < _bracelets.length; i++) {
+  //   if (_bracelets[i].IPAddress === IPAddress) {
+  //     _bracelets.splice(i, 1);
+  //     return;
+  //   }
+  // }
 
   _bracelets.push(new Bracelet(IPAddress));
 });

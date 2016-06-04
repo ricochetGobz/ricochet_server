@@ -41,10 +41,6 @@ export default class Bracelet {
     this.board.on('ready', this._initMotors.bind(this));
   }
 
-  isConnected() {
-    return (this.IPAddress !== -1);
-  }
-
   playNote(note) {
     switch (note) {
       case 1:
@@ -77,19 +73,19 @@ export default class Bracelet {
     this._initMotor(this.rightMotor, 'D1');
   }
 
-  _initMotor(motor, pin) {
-    motor.five = new five.Motor({ pin });
+_initMotor(motor, pin) {
+  motor.five = new five.Motor({ pin });
 
-    motor.five.on('start', () => {
-      console.log('start', Date.now());
-    });
+  motor.five.on('start', () => {
+    console.log('start', Date.now());
+  });
 
-    motor.five.on('stop', () => {
-      console.log('stop', Date.now());
-    });
+  motor.five.on('stop', () => {
+    console.log('stop', Date.now());
+  });
 
-    motor.five.start(0);
-  }
+  motor.five.start(0);
+}
 
   _setSpeed(motor, speed) {
     if (motor.speed < speed) {
