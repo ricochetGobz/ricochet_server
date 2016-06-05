@@ -13,6 +13,7 @@ const adresses = {
   GALLERY_DISCONNECTED: '/gallery/disconnected',
   GALLERY_COMPOSITIONS: '/gallery/compositions',
   GALLERY_NEW_COMPOSITION: '/gallery/newcomposition',
+  GALLERY_UPDATE_COMPOSITION: '/gallery/updatecomposition',
   // OpenFramework
   OPEN_FRAMEWORKS_STATUS_CHANGE: '/openframeworks/statuschange',
   OPEN_FRAMEWORKS_CONNECTED: '/openframeworks/connected',

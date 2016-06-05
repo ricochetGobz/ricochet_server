@@ -17,6 +17,8 @@ import utils from './core/utils';
 import compositionsData from './core/compositions';
 
 
+const COMPOSITION_FILE = 'app/core/compositions.json';
+
 const _bracelets = [];
 const _cubeController = new CubeController();
 
@@ -36,6 +38,20 @@ function createCube(idCube, idSound, callback) {
   _cubeController.pushCube(idCube, idSound, () => {
     _OFBridge.sendCubeEvent(adrs.CUBE_CONNECTED, idCube, idSound);
     if (callback) callback();
+  });
+}
+
+function saveCompositionData() {
+  fs.exists(COMPOSITION_FILE, (exists) => {
+    if (exists) {
+      fs.writeFile(COMPOSITION_FILE, JSON.stringify(compositionsData), (err) => {
+        if (err) throw err;
+        utils.logInfo(`Composition saved.
+          ${compositionsData.compositions.length} composition(s)`);
+      });
+    } else {
+      utils.logError(`${COMPOSITION_FILE} not found.`);
+    }
   });
 }
 
@@ -114,18 +130,7 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
   // SAVE COMPOSITION INTO FILE
   compo.id = compositionsData.compositions.length;
   compositionsData.compositions.unshift(compo);
-  const compositionsFile = 'app/core/compositions.json';
-  fs.exists(compositionsFile, (exists) => {
-    if (exists) {
-      fs.writeFile(compositionsFile, JSON.stringify(compositionsData), (err) => {
-        if (err) throw err;
-        utils.logInfo(`New composition saved.
-          ${compositionsData.compositions.length} composition(s)`);
-      });
-    } else {
-      utils.logError(`${compositionsFile} not found.`);
-    }
-  });
+  saveCompositionData();
 
   // Send new composition into server
   _WSServer.postToGallery(adrs.GALLERY_NEW_COMPOSITION, compo);
@@ -134,6 +139,20 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_NEW_COMPOSITION, (compo) => {
 /**
 * GALLERY
 */
+_WSServer.onReceiveToSocket(adrs.GALLERY_UPDATE_COMPOSITION, (composition) => {
+  utils.logEvent(`Update composition ${composition.id}...`);
+
+  for (let i = 0; i < compositionsData.compositions.length; i++) {
+    if (compositionsData.compositions[i].id === composition.id) {
+      compositionsData.compositions[i] = composition;
+      saveCompositionData();
+      return;
+    }
+  }
+
+  utils.logError('The composition updated doesn\'t exist');
+});
+
 _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
   _galleryConnected = isConnected;
   console.log(`GALLERY : ${_galleryConnected ? 'ON' : 'OFF'}`);
@@ -142,6 +161,7 @@ _WSServer.onReceiveToSocket(adrs.GALLERY_STATUS_CHANGE, (isConnected) => {
     _WSServer.postToGallery(adrs.GALLERY_COMPOSITIONS, compositionsData.compositions);
   }
 });
+
 
 /**
 * CUBE HTTP
