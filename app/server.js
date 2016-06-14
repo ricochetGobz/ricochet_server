@@ -83,6 +83,11 @@ _OFBridge.onKinectStatusChange((isConnected) => {
   _WSServer.postToWebRender(adrs.KINECT_STATUS_CHANGE, _kinectConnected);
 });
 
+_OFBridge.on(adrs.OPEN_FRAMEWORKS_START_PLAYER, () => {
+  utils.logEvent('start timer');
+  _WSServer.postToWebRender(adrs.OPEN_FRAMEWORKS_START_PLAYER);
+});
+
 _OFBridge.on(adrs.CUBE_PLAYED, (d) => {
   _WSServer.postToWebRender(adrs.CUBE_PLAYED, JSON.stringify(d));
 
