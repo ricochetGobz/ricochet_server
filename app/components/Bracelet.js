@@ -8,12 +8,13 @@
 import five from 'johnny-five';
 import Particle from 'particle-io';
 
-const VEL = 2;
+const VEL = 0.2;
 const TIMER = 5;
+const NOTE_TIMING_MAX = 5;
 
 const MAX_SENSOR = 255;
-const MEDIUM_SENSOR = 180;
-const MIN_SENSOR = 100;
+const MEDIUM_SENSOR = 170;
+const MIN_SENSOR = 85;
 
 
 export default class Bracelet {
@@ -31,40 +32,20 @@ export default class Bracelet {
       speed: 0,
       five: false,
       active: false,
+      lastNotePlayed: new Date(),
     };
     this.rightMotor = {
       speed: 0,
       five: false,
       active: false,
+      lastNotePlayed: new Date(),
     };
 
-    this.board.on('ready', this._initMotors.bind(this));
-  }
+    this.board.on('ready', () => {
+      this._initMotors();
 
-  playNote(note) {
-    switch (note) {
-      case 1:
-        this._setSpeed(this.leftMotor, MAX_SENSOR);
-        break;
-      case 2:
-        this._setSpeed(this.leftMotor, MEDIUM_SENSOR);
-        break;
-      case 3:
-        this._setSpeed(this.leftMotor, MIN_SENSOR);
-        break;
-      case 4:
-        this._setSpeed(this.rightMotor, MIN_SENSOR);
-        break;
-      case 5:
-        this._setSpeed(this.rightMotor, MEDIUM_SENSOR);
-        break;
-      case 6:
-        this._setSpeed(this.rightMotor, MAX_SENSOR);
-        break;
-      default:
-        console.log(`Note ${note} received not defined`);
-        break;
-    }
+      this.board.loop(50, this._update.bind(this));
+    });
   }
 
   _initMotors() {
@@ -73,42 +54,65 @@ export default class Bracelet {
     this._initMotor(this.rightMotor, 'D1');
   }
 
-_initMotor(motor, pin) {
-  motor.five = new five.Motor({ pin });
+  _initMotor(motor, pin) {
+    motor.five = new five.Motor({ pin });
 
-  motor.five.on('start', () => {
-    console.log('start', Date.now());
-  });
+    motor.five.on('start', () => {
+      console.log('start', Date.now());
+    });
 
-  motor.five.on('stop', () => {
-    console.log('stop', Date.now());
-  });
+    motor.five.on('stop', () => {
+      console.log('stop', Date.now());
+    });
 
-  motor.five.start(0);
-}
+    motor.five.start(0);
+  }
 
-  _setSpeed(motor, speed) {
-    if (motor.speed < speed) {
-      motor.speed = speed;
+  _update() {
+    // TODO faire une décramentation plus lente et proportinelle pour chaque note.
+    if (this.leftMotor.active && ((new Date() - this.leftMotor.lastNotePlayed) / 100) > this.leftMotor.duration) {
+      this.leftMotor.speed = 0;
+      this.leftMotor.five.speed(this.leftMotor.speed);
+      if (this.leftMotor.speed < 20) this.leftMotor.active = false;
+    }
 
-      if (!motor.active) {
-        motor.active = true;
-        this._decrementSpeed(motor);
-      }
+    if (this.rightMotor.active && ((new Date() - this.rightMotor.lastNotePlayed) / 100) > this.rightMotor.duration) {
+      this.rightMotor.speed = 0;
+      this.rightMotor.five.speed(this.rightMotor.speed);
+      if (this.rightMotor.speed < 20) this.rightMotor.active = false;
     }
   }
 
-  _decrementSpeed(motor) {
-    motor.speed -= VEL;
+  playNote(note) {
+    switch (note) {
+      case 1:
+        this._setSpeed(this.leftMotor, 255, 3);
+        break;
+      case 2:
+        this._setSpeed(this.leftMotor, 210, 4);
+        break;
+      case 3:
+        this._setSpeed(this.leftMotor, 168, 5);
+        break;
+      case 4:
+        this._setSpeed(this.rightMotor, 126, 9);
+        break;
+      case 5:
+        this._setSpeed(this.rightMotor, 84, 12);
+        break;
+      case 6:
+        this._setSpeed(this.rightMotor, 42, 15);
+        break;
+      default:
+        console.log(`Note ${note} received not defined`);
+        break;
+    }
+  }
 
-    motor.five.speed(motor.speed);
-
-    this.board.wait(TIMER, () => {
-      if (motor.speed > 0.5) {
-        this._decrementSpeed(motor);
-      } else {
-        motor.active = false;
-      }
-    });
+  _setSpeed(motor, speed, duration) {
+    motor.five.speed(speed);
+    motor.duration = duration;
+    motor.active = true;
+    motor.lastNotePlayed = new Date();
   }
 }
