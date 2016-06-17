@@ -256,7 +256,9 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_FACE_CHANGED, (req, res) => {
 */
 _WSServer.onReceiveToHTTP(adrs.BRACELET_CONNECTED, (req, res) => {
   res.json({ success: true, message: '200' });
+  console.log(req.body);
   const IPAddress = req.body.braceletIp;
+  const PORT = req.body.braceletPort;
 
   utils.logEvent(`bracelet connected at ${IPAddress}`);
 
@@ -267,7 +269,7 @@ _WSServer.onReceiveToHTTP(adrs.BRACELET_CONNECTED, (req, res) => {
   //   }
   // }
 
-  _bracelets.push(new Bracelet(IPAddress));
+  _bracelets.push(new Bracelet(IPAddress, PORT));
 });
 
 _WSServer.onReceiveToHTTP(adrs.BRACELET_DISCONNECTED, (req, res) => {

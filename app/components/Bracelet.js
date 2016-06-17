@@ -18,13 +18,14 @@ const MIN_SENSOR = 85;
 
 
 export default class Bracelet {
-  constructor(IPAddress) {
+  constructor(IPAddress, PORT) {
     this.IPAddress = IPAddress;
+    this.PORT = PORT || 48879;
 
     this.board = new five.Board({
       io: new Particle({
         host: this.IPAddress,
-        port: 48879,
+        port: this.PORT,
       }),
     });
 
@@ -49,9 +50,8 @@ export default class Bracelet {
   }
 
   _initMotors() {
-    console.log('init motors');
-    this._initMotor(this.leftMotor, 'D0');
-    this._initMotor(this.rightMotor, 'D1');
+    this._initMotor(this.leftMotor, 'D2');
+    this._initMotor(this.rightMotor, 'D3');
   }
 
   _initMotor(motor, pin) {
