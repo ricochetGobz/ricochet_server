@@ -8,14 +8,6 @@
 import five from 'johnny-five';
 import Particle from 'particle-io';
 
-const VEL = 0.2;
-const TIMER = 5;
-const NOTE_TIMING_MAX = 5;
-
-const MAX_SENSOR = 255;
-const MEDIUM_SENSOR = 170;
-const MIN_SENSOR = 85;
-
 
 export default class Bracelet {
   constructor(IPAddress, PORT) {
@@ -69,7 +61,6 @@ export default class Bracelet {
   }
 
   _update() {
-    // TODO faire une décramentation plus lente et proportinelle pour chaque note.
     if (this.leftMotor.active && ((new Date() - this.leftMotor.lastNotePlayed) / 100) > this.leftMotor.duration) {
       this.leftMotor.speed = 0;
       this.leftMotor.five.speed(this.leftMotor.speed);

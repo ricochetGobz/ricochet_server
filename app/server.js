@@ -194,7 +194,10 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_TOUCHED, (req, res) => {
   res.json({ success: true, message: '200' });
   console.log(req.body);
   const idCube = parseInt(req.body.cubeId, 10) || -1;
-  const faceId = parseInt(req.body.faceId, 10) || -1;
+  let faceId = parseInt(req.body.faceId, 10) || -1;
+
+  // TEMPS disalow wainting for good accelerometer value
+  faceId = -1;
 
   utils.logEvent(`Cube ${idCube} touched`);
 
@@ -256,12 +259,12 @@ _WSServer.onReceiveToHTTP(adrs.CUBE_FACE_CHANGED, (req, res) => {
 */
 _WSServer.onReceiveToHTTP(adrs.BRACELET_CONNECTED, (req, res) => {
   res.json({ success: true, message: '200' });
-  console.log(req.body);
   const IPAddress = req.body.braceletIp;
   const PORT = req.body.braceletPort;
 
   utils.logEvent(`bracelet connected at ${IPAddress}`);
 
+  // WARN multiple connection not implemented by johnny-five.
   // for (let i = 0; i < _bracelets.length; i++) {
   //   if (_bracelets[i].IPAddress === IPAddress) {
   //     _bracelets.splice(i, 1);
@@ -272,12 +275,17 @@ _WSServer.onReceiveToHTTP(adrs.BRACELET_CONNECTED, (req, res) => {
   _bracelets.push(new Bracelet(IPAddress, PORT));
 });
 
-_WSServer.onReceiveToHTTP(adrs.BRACELET_DISCONNECTED, (req, res) => {
-  res.json({ success: true, message: '200' });
-  // TODO get idbracelet
-  // TODO send to OF the bracelet.
-  delete _bracelets[idBracelet];
-});
+// TODO detect disconnection
+// _WSServer.onReceiveToHTTP(adrs.BRACELET_DISCONNECTED, (req, res) => {
+//   res.json({ success: true, message: '200' });
+//   const IPAddress = req.body.braceletIp;
+//   for (let i = 0; i < _bracelets.length; i++) {
+//     if (_bracelets[i].IPAddress === IPAddress) {
+//     _bracelets.splice(i, 1);
+//     return;
+//     }
+//   }
+// });
 
 /**
  * #########################
